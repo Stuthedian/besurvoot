@@ -4,19 +4,26 @@
 #include <curses.h>
 
 #define TERMINAL_WIDTH 80
-#define TERMINAL_HEIGHT 4
 #define BOX_OFFSET 2
-#define MAX_ITEMS_ON_SCREEN (TERMINAL_HEIGHT - BOX_OFFSET)
 #define NUM_MENU_ITEMS 5
+
+typedef struct Env
+{
+    int terminal_width;
+    int terminal_height;
+    int max_items_on_screen;
+} Env_t;
 
 typedef struct Menu
 {
   WINDOW* menu_wnd;
-  WINDOW* items[MAX_ITEMS_ON_SCREEN];
+  WINDOW** items;
   char text[NUM_MENU_ITEMS][TERMINAL_WIDTH];
   int top_of_text_array;
   int current_idx;
   int screen_idx;
+
+  Env_t env;
 } Menu_t;
 
 

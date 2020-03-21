@@ -7,9 +7,10 @@
 
 void sig_winch(int signo)
 {
-
+    struct winsize size;
+    ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size);
+    resizeterm(size.ws_row, size.ws_col);
 }
-
 
 void ncurses_init()
 {
@@ -37,15 +38,20 @@ endwin();
 void menu_init(Menu_t *menu)
 {
   const int menu_box_offset = BOX_OFFSET;
-  int menu_width = TERMINAL_WIDTH;
-  int menu_height = TERMINAL_HEIGHT;
+  struct winsize size;
+  ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size);
+  menu->env.terminal_width = size.ws_col;
+  menu->env.terminal_height = size.ws_row;
+  menu->env.max_items_on_screen = menu->env.terminal_height - menu_box_offset;
+
   int menu_ncurses_y = 0;
   int menu_ncurses_x = 0;
 
-  menu->menu_wnd = newwin(menu_height, menu_width, menu_ncurses_y,
+  menu->menu_wnd = newwin(menu->env.terminal_height, menu->env.terminal_width, menu_ncurses_y,
                           menu_ncurses_x);
+  menu->items = malloc(menu->env.max_items_on_screen * sizeof(WINDOW));
 
-  int menu_item_width = menu_width - menu_box_offset;
+  int menu_item_width = menu->env.terminal_width - menu_box_offset;
 
   strcpy(menu->text[0], "show firmware");
   strcpy(menu->text[1], "reload system");
@@ -56,7 +62,7 @@ void menu_init(Menu_t *menu)
   menu->screen_idx = 0;
   menu->current_idx = 0;
   menu->top_of_text_array = 0;
-  for (int i = 0; i < MAX_ITEMS_ON_SCREEN; i++) {
+  for (int i = 0; i < menu->env.max_items_on_screen; i++) {
       menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
               i + menu_box_offset / 2,
               0 + menu_box_offset / 2);
@@ -73,9 +79,10 @@ void menu_init(Menu_t *menu)
 
 void menu_destroy(Menu_t *menu)
 {
-  for (int i = 0; i < MAX_ITEMS_ON_SCREEN; i++) {
+  for (int i = 0; i < menu->env.max_items_on_screen; i++) {
     delwin(menu->items[i]);
   }
+  free(menu->items);
 
   delwin(menu->menu_wnd);
 }
@@ -87,10 +94,10 @@ void menu_go_down(Menu_t *menu)
         wrefresh(menu->items[menu->screen_idx]);
         menu->screen_idx++;
         menu->current_idx++;
-        if(menu->screen_idx >= MAX_ITEMS_ON_SCREEN)
+        if(menu->screen_idx >= menu->env.max_items_on_screen)
         {
             menu->top_of_text_array++;
-            for (int i = 0, j = menu->top_of_text_array; i < MAX_ITEMS_ON_SCREEN && i < NUM_MENU_ITEMS; i++, j++) {
+            for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && i < NUM_MENU_ITEMS; i++, j++) {
                 wclear(menu->items[i]);
                 wprintw(menu->items[i], menu->text[j]);
                 wrefresh(menu->items[i]);
@@ -112,7 +119,7 @@ void menu_go_up(Menu_t *menu)
         if(menu->screen_idx < 0)
         {
             menu->top_of_text_array--;
-            for (int i = 0, j = menu->top_of_text_array; i < MAX_ITEMS_ON_SCREEN && i < NUM_MENU_ITEMS; i++, j++) {
+            for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && i < NUM_MENU_ITEMS; i++, j++) {
                 wclear(menu->items[i]);
                 wprintw(menu->items[i], menu->text[j]);
                 wrefresh(menu->items[i]);
@@ -132,9 +139,9 @@ void menu_move(Menu_t *menu)
 
       switch (ch) 
       {
-          case KEY_DOWN:
+          case 'j': case KEY_DOWN:
               menu_go_down(menu); break;
-          case KEY_UP:
+          case 'k': case KEY_UP:
               menu_go_up(menu); break;
           case '\n':
               menu_act_on_item(menu); break;
