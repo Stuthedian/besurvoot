@@ -4,7 +4,9 @@
 #include <curses.h>
 
 #define TERMINAL_WIDTH 80
-#define TERMINAL_HEIGHT 24
+#define TERMINAL_HEIGHT 4
+#define BOX_OFFSET 2
+#define MAX_ITEMS_ON_SCREEN (TERMINAL_HEIGHT - BOX_OFFSET)
 #define NUM_MENU_ITEMS 5
 #define STATUS_PLAY 0
 #define STATUS_EXIT 1
@@ -17,8 +19,9 @@ typedef struct Menu_item
 
 typedef struct Menu
 {
-  WINDOW *menu_wnd;
-  Menu_item_t menu_items[NUM_MENU_ITEMS];
+  WINDOW* menu_wnd;
+  WINDOW* items[MAX_ITEMS_ON_SCREEN];
+  char text[NUM_MENU_ITEMS][TERMINAL_WIDTH];
   int current_idx;
 } Menu_t;
 

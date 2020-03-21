@@ -45,9 +45,9 @@ void ncurses_init()
 
 void menu_init(Menu_t *menu)
 {
-  const int menu_box_offset = 2;
-  int menu_width = TERMINAL_WIDTH + menu_box_offset;
-  int menu_height = NUM_MENU_ITEMS + menu_box_offset;
+  const int menu_box_offset = BOX_OFFSET;
+  int menu_width = TERMINAL_WIDTH;
+  int menu_height = TERMINAL_HEIGHT;
   int menu_ncurses_y = 0;
   int menu_ncurses_x = 0;
 
@@ -56,27 +56,22 @@ void menu_init(Menu_t *menu)
 
   int menu_item_width = menu_width - menu_box_offset;
 
-  for (int i = 0; i < NUM_MENU_ITEMS; i++) {
-    menu->menu_items[i].item = derwin(menu->menu_wnd, 1, menu_item_width,
-                                 i + menu_box_offset / 2,
-                                 0 + menu_box_offset / 2);
+  strcpy(menu->text[0], "show firmware");
+  strcpy(menu->text[1], "reload system");
+  strcpy(menu->text[2], "show running config");
+  strcpy(menu->text[3], "show msdp vrf test peers");
+  strcpy(menu->text[4], "Exit");
+
+  for (int i = 0; i < MAX_ITEMS_ON_SCREEN; i++) {
+      menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
+              i + menu_box_offset / 2,
+              0 + menu_box_offset / 2);
+      wprintw(menu->items[i], menu->text[i]);
   }
-
-  wprintw(menu->menu_items[0].item, "show firmware");
-  wprintw(menu->menu_items[1].item, "reload system");
-  wprintw(menu->menu_items[2].item, "show running config");
-  wprintw(menu->menu_items[3].item, "show msdp vrf test peers");
-  wprintw(menu->menu_items[4].item, "Exit");
-
-  strcpy(menu->menu_items[0].text, "show firmware");
-  strcpy(menu->menu_items[1].text, "reload system");
-  strcpy(menu->menu_items[2].text, "show running config");
-  strcpy(menu->menu_items[3].text, "show msdp vrf test peers");
-  strcpy(menu->menu_items[4].text, "Exit");
 
   wbkgd(menu->menu_wnd, COLOR_PAIR(1));
   menu->current_idx = 0;
-  wbkgd(menu->menu_items[menu->current_idx].item, COLOR_PAIR(1) | A_BOLD);
+  wbkgd(menu->items[menu->current_idx], COLOR_PAIR(1) | A_BOLD);
 
   box(menu->menu_wnd, '|', '-');
   wrefresh(menu->menu_wnd);
@@ -84,8 +79,8 @@ void menu_init(Menu_t *menu)
 
 void menu_destroy(Menu_t *menu)
 {
-  for (int i = 0; i < NUM_MENU_ITEMS; i++) {
-    delwin(menu->menu_items[i].item);
+  for (int i = 0; i < MAX_ITEMS_ON_SCREEN; i++) {
+    delwin(menu->items[i]);
   }
 
   delwin(menu->menu_wnd);
@@ -93,22 +88,22 @@ void menu_destroy(Menu_t *menu)
 
 void menu_go_down(Menu_t *menu)
 {
-  if (menu->current_idx + 1 < NUM_MENU_ITEMS) {
+  /*if (menu->current_idx + 1 < NUM_MENU_ITEMS) {
     wbkgd(menu->menu_items[menu->current_idx].item, COLOR_PAIR(1));
     wrefresh(menu->menu_items[menu->current_idx].item);
     wbkgd(menu->menu_items[++menu->current_idx].item, COLOR_PAIR(1) | A_BOLD);
     wrefresh(menu->menu_items[menu->current_idx].item);
-  }
+  }*/
 }
 
 void menu_go_up(Menu_t *menu)
 {
-  if (menu->current_idx - 1 >= 0) {
+  /*if (menu->current_idx - 1 >= 0) {
     wbkgd(menu->menu_items[menu->current_idx].item, COLOR_PAIR(1));
     wrefresh(menu->menu_items[menu->current_idx].item);
     wbkgd(menu->menu_items[--menu->current_idx].item, COLOR_PAIR(1) | A_BOLD);
     wrefresh(menu->menu_items[menu->current_idx].item);
-  }
+  }*/
 }
 
 int menu_move(Menu_t *menu)
@@ -145,7 +140,7 @@ void menu_act_on_item(Menu_t *menu)
 {
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
-  char* command = menu->menu_items[menu->current_idx].text;
+  char* command = menu->text[menu->current_idx];
   char* suffix = "\" Enter";
   result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
   result_command[0] = '\0';
