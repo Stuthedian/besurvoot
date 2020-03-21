@@ -114,12 +114,24 @@ void menu_go_down(Menu_t *menu)
 
 void menu_go_up(Menu_t *menu)
 {
-  /*if (menu->current_idx - 1 >= 0) {
-    wbkgd(menu->menu_items[menu->current_idx].item, COLOR_PAIR(1));
-    wrefresh(menu->menu_items[menu->current_idx].item);
-    wbkgd(menu->menu_items[--menu->current_idx].item, COLOR_PAIR(1) | A_BOLD);
-    wrefresh(menu->menu_items[menu->current_idx].item);
-  }*/
+  if (menu->current_idx - 1 >= 0) {
+    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1));
+    wrefresh(menu->items[menu->screen_idx]);
+        menu->screen_idx--;
+        menu->current_idx--;
+        if(menu->screen_idx < 0)
+        {
+            menu->top_of_text_array--;
+            for (int i = 0, j = menu->top_of_text_array; i < MAX_ITEMS_ON_SCREEN && i < NUM_MENU_ITEMS; i++, j++) {
+                wclear(menu->items[i]);
+                wprintw(menu->items[i], menu->text[j]);
+                wrefresh(menu->items[i]);
+            }
+            menu->screen_idx++;
+        }
+    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE);
+    wrefresh(menu->items[menu->screen_idx]);
+  }
 }
 
 int menu_move(Menu_t *menu)
