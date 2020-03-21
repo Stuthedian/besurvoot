@@ -10,23 +10,9 @@ void sig_winch(int signo)
 
 }
 
-void check_terminal_size()
-{
-  struct winsize size;
-  ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size);
-
-  if (size.ws_col != TERMINAL_WIDTH || size.ws_row != TERMINAL_HEIGHT) {
-    printf("Terminal has improper width/height!\n");
-    printf("Recommended sizes are: width - %d  height - %d\n",
-           TERMINAL_WIDTH, TERMINAL_HEIGHT);
-    exit(EXIT_FAILURE);
-  }
-}
 
 void ncurses_init()
 {
-  // check_terminal_size();
-
   initscr();
   signal(SIGWINCH, sig_winch);
   cbreak();
@@ -41,6 +27,11 @@ void ncurses_init()
   nodelay(stdscr, 1);
   bkgd(COLOR_PAIR(2));
   refresh();
+}
+
+void ncurses_destroy()
+{
+endwin();
 }
 
 void menu_init(Menu_t *menu)
@@ -62,7 +53,6 @@ void menu_init(Menu_t *menu)
   strcpy(menu->text[3], "show msdp vrf test peers");
   strcpy(menu->text[4], "Exit");
 
-  menu->page = 0;
   menu->screen_idx = 0;
   menu->current_idx = 0;
   menu->top_of_text_array = 0;
@@ -134,7 +124,7 @@ void menu_go_up(Menu_t *menu)
   }
 }
 
-int menu_move(Menu_t *menu)
+void menu_move(Menu_t *menu)
 {
   while (1) 
   {
@@ -142,24 +132,14 @@ int menu_move(Menu_t *menu)
 
       switch (ch) 
       {
-          case 'q':
-              return STATUS_EXIT;
-
           case KEY_DOWN:
-              menu_go_down(menu);
-              break;
-
+              menu_go_down(menu); break;
           case KEY_UP:
-              menu_go_up(menu);
-              break;
-
+              menu_go_up(menu); break;
           case '\n':
-              menu_act_on_item(menu);
-              break;
-
-          case ERR:
-          default:
-              break;
+              menu_act_on_item(menu); break;
+          case 'q': return;
+          case ERR: default: break;
       }
   }
 }
@@ -170,22 +150,25 @@ void menu_act_on_item(Menu_t *menu)
   char* prefix = "tmux send-keys -t ! \"";
   char* command = menu->text[menu->current_idx];
   char* suffix = "\" Enter";
+
   result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
   result_command[0] = '\0';
+
   strcat(result_command, prefix);
   strcat(result_command, command);
   strcat(result_command, suffix);
+
   system(result_command);
+
   free(result_command);
 }
 
-int menu_do()
+void menu_do_routine()
 {
   Menu_t main_menu;
-  menu_init(&main_menu);
-  int player_choice = menu_move(&main_menu);
-  menu_destroy(&main_menu);
 
-  return player_choice;
+  menu_init(&main_menu);
+  menu_move(&main_menu);
+  menu_destroy(&main_menu);
 }
 

@@ -4,8 +4,8 @@
 int main()
 {
     ncurses_init();
-    menu_do();
-	endwin();
+    menu_do_routine();
+	ncurses_destroy();
 
     return 0;
 }
