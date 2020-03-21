@@ -5,7 +5,7 @@
 
 #define TERMINAL_WIDTH 80
 #define TERMINAL_HEIGHT 24
-#define NUM_MENU_ITEMS 2
+#define NUM_MENU_ITEMS 5
 #define STATUS_PLAY 0
 #define STATUS_EXIT 1
 
@@ -30,6 +30,4 @@ int menu_act_on_item(struct Menu *menu);
 
 int menu_do();
 
-void draw_waiting_for_connection();
-void draw_waiting_for_player();
 #endif // _MENU_H_

@@ -46,10 +46,10 @@ void ncurses_init()
 void menu_init(struct Menu *menu)
 {
   const int menu_box_offset = 2;
-  int menu_width = 4 + menu_box_offset;
+  int menu_width = TERMINAL_WIDTH + menu_box_offset;
   int menu_height = NUM_MENU_ITEMS + menu_box_offset;
-  int menu_ncurses_y = TERMINAL_HEIGHT / 2 - menu_height / 2;
-  int menu_ncurses_x = TERMINAL_WIDTH / 2 - menu_width / 2;
+  int menu_ncurses_y = 0;
+  int menu_ncurses_x = 0;
 
   menu->menu_wnd = newwin(menu_height, menu_width, menu_ncurses_y,
                           menu_ncurses_x);
@@ -62,8 +62,11 @@ void menu_init(struct Menu *menu)
                                  0 + menu_box_offset / 2);
   }
 
-  wprintw(menu->menu_items[0], "Play");
-  wprintw(menu->menu_items[1], "Exit");
+  wprintw(menu->menu_items[0], "show firmware");
+  wprintw(menu->menu_items[1], "reload system");
+  wprintw(menu->menu_items[2], "show running config");
+  wprintw(menu->menu_items[3], "show msdp vrf test peers");
+  wprintw(menu->menu_items[4], "Exit");
 
   wbkgd(menu->menu_wnd, COLOR_PAIR(1));
   menu->current_idx = 0;
@@ -104,31 +107,30 @@ void menu_go_up(struct Menu *menu)
 
 int menu_move(struct Menu *menu)
 {
+  while (1) 
+  {
+      int ch = getch();
 
-  while (1) {
-    int ch = getch();
+      switch (ch) 
+      {
+          case 'q':
+              return STATUS_EXIT;
 
-    switch (ch) {
-    case 'q':
-      return STATUS_EXIT;
+          case KEY_DOWN:
+              menu_go_down(menu);
+              break;
 
-    case KEY_DOWN:
-      menu_go_down(menu);
-      break;
+          case KEY_UP:
+              menu_go_up(menu);
+              break;
 
-    case KEY_UP:
-      menu_go_up(menu);
-      break;
+          case '\n':
+              return (menu_act_on_item(menu));
 
-    case '\n':
-      return (menu_act_on_item(menu));
-
-    case ERR:
-      break;
-
-    default:
-      break;
-    }
+          case ERR:
+          default:
+              break;
+      }
   }
 }
 
@@ -162,19 +164,3 @@ int menu_do()
   return player_choice;
 }
 
-void draw_waiting_for_connection()
-{
-  erase();
-  bkgd(COLOR_PAIR(3));
-  move(TERMINAL_HEIGHT - 1, 0);
-  printw("Waiting for server response");
-  refresh();
-}
-
-void draw_waiting_for_player()
-{
-  erase();
-  move(TERMINAL_HEIGHT - 1, 0);
-  printw("Waiting for second player to connect");
-  refresh();
-}
