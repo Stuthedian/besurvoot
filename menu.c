@@ -143,7 +143,7 @@ int menu_move(Menu_t *menu)
 int menu_act_on_item(Menu_t *menu)
 {
   int status = -1;
-
+  system("tmux send-keys -t ! \"TEST\" Enter");
   return status;
 }
 
