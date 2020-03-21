@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -g -Wall -Wfatal-errors -Wsign-compare
+CFLAGS = -g -Wall -Wfatal-errors -Wsign-compare -fstack-protector
 .PHONY: all
 
 bindir = bin
