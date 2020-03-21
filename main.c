@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include "menu.h"
 
 int main()
 {
-    puts("hello world!");
+    ncurses_init();
+    menu_do();
     return 0;
 }
