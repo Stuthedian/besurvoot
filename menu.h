@@ -34,7 +34,7 @@ void menu_go_up(Menu_t *menu);
 void menu_go_down(Menu_t *menu);
 int menu_move(Menu_t *menu);
 
-int menu_act_on_item(Menu_t *menu);
+void menu_act_on_item(Menu_t *menu);
 
 int menu_do();
 

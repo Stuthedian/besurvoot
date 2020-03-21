@@ -131,7 +131,8 @@ int menu_move(Menu_t *menu)
               break;
 
           case '\n':
-              return (menu_act_on_item(menu));
+              menu_act_on_item(menu);
+              break;
 
           case ERR:
           default:
@@ -140,11 +141,19 @@ int menu_move(Menu_t *menu)
   }
 }
 
-int menu_act_on_item(Menu_t *menu)
+void menu_act_on_item(Menu_t *menu)
 {
-  int status = -1;
-  system("tmux send-keys -t ! \"TEST\" Enter");
-  return status;
+  char* result_command = NULL;
+  char* prefix = "tmux send-keys -t ! \"";
+  char* command = menu->menu_items[menu->current_idx].text;
+  char* suffix = "\" Enter";
+  result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
+  result_command[0] = '\0';
+  strcat(result_command, prefix);
+  strcat(result_command, command);
+  strcat(result_command, suffix);
+  system(result_command);
+  free(result_command);
 }
 
 int menu_do()
