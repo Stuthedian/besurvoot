@@ -5,5 +5,6 @@ int main()
 {
     ncurses_init();
     menu_do();
+	endwin();
     return 0;
 }
