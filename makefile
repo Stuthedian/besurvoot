@@ -12,7 +12,7 @@ all: $(target)
 $(objdir)/%.o: %.c menu.h
 	$(CC) $(CFLAGS) $< -c -o $@
 $(target): $(objects)
-	$(CC) $(CFLAGS) $^ -o $@ -lncurses 
+	$(CC) $(CFLAGS) $^ -o $@ -lncurses && ./$@
 
 
 .PHONY: clean
