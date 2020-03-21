@@ -22,7 +22,10 @@ typedef struct Menu
   WINDOW* menu_wnd;
   WINDOW* items[MAX_ITEMS_ON_SCREEN];
   char text[NUM_MENU_ITEMS][TERMINAL_WIDTH];
+  int top_of_text_array;
   int current_idx;
+  int screen_idx;
+int page;
 } Menu_t;
 
 

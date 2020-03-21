@@ -62,16 +62,20 @@ void menu_init(Menu_t *menu)
   strcpy(menu->text[3], "show msdp vrf test peers");
   strcpy(menu->text[4], "Exit");
 
+  menu->page = 0;
+  menu->screen_idx = 0;
+  menu->current_idx = 0;
+  menu->top_of_text_array = 0;
   for (int i = 0; i < MAX_ITEMS_ON_SCREEN; i++) {
       menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
               i + menu_box_offset / 2,
               0 + menu_box_offset / 2);
-      wprintw(menu->items[i], menu->text[i]);
+      if(i < NUM_MENU_ITEMS)
+          wprintw(menu->items[i], menu->text[i]);
   }
 
   wbkgd(menu->menu_wnd, COLOR_PAIR(1));
-  menu->current_idx = 0;
-  wbkgd(menu->items[menu->current_idx], COLOR_PAIR(1) | A_BOLD);
+  wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE);
 
   box(menu->menu_wnd, '|', '-');
   wrefresh(menu->menu_wnd);
@@ -88,12 +92,24 @@ void menu_destroy(Menu_t *menu)
 
 void menu_go_down(Menu_t *menu)
 {
-  /*if (menu->current_idx + 1 < NUM_MENU_ITEMS) {
-    wbkgd(menu->menu_items[menu->current_idx].item, COLOR_PAIR(1));
-    wrefresh(menu->menu_items[menu->current_idx].item);
-    wbkgd(menu->menu_items[++menu->current_idx].item, COLOR_PAIR(1) | A_BOLD);
-    wrefresh(menu->menu_items[menu->current_idx].item);
-  }*/
+    if (menu->current_idx + 1 < NUM_MENU_ITEMS) {
+        wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1));
+        wrefresh(menu->items[menu->screen_idx]);
+        menu->screen_idx++;
+        menu->current_idx++;
+        if(menu->screen_idx >= MAX_ITEMS_ON_SCREEN)
+        {
+            menu->top_of_text_array++;
+            for (int i = 0, j = menu->top_of_text_array; i < MAX_ITEMS_ON_SCREEN && i < NUM_MENU_ITEMS; i++, j++) {
+                wclear(menu->items[i]);
+                wprintw(menu->items[i], menu->text[j]);
+                wrefresh(menu->items[i]);
+            }
+            menu->screen_idx--;
+        }
+        wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE);
+        wrefresh(menu->items[menu->screen_idx]);
+    }
 }
 
 void menu_go_up(Menu_t *menu)
