@@ -4,12 +4,18 @@ CFLAGS = -g -Wall -Wfatal-errors -Wsign-compare -fstack-protector
 
 bindir = bin
 objdir = bin/obj
-sources = menu.c main.c
+sources = menu.c main.c check.c
 objects = $(addprefix $(objdir)/, $(sources:.c=.o))
 target = $(bindir)/main
 
 all: $(target) 
-$(objdir)/%.o: %.c menu.h
+$(objdir)/check.o: check.c check.h
+	$(CC) $(CFLAGS) $< -c -o $@
+
+$(objdir)/menu.o $(objdir)/main.o: menu.h
+$(objdir)/menu.o: menu.c
+	$(CC) $(CFLAGS) $< -c -o $@
+$(objdir)/main.o: main.c
 	$(CC) $(CFLAGS) $< -c -o $@
 $(target): $(objects)
 	$(CC) $(CFLAGS) $^ -o $@ -lncurses && ./$@
