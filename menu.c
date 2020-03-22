@@ -5,11 +5,16 @@
 #include <string.h>
 #include "menu.h"
 
+Menu_t main_menu;
+
 void sig_winch(int signo)
 {
     struct winsize size;
     ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size);
     resizeterm(size.ws_row, size.ws_col);
+    menu_destroy(&main_menu);
+    refresh();
+    menu_init(&main_menu);
 }
 
 void ncurses_init()
@@ -172,7 +177,7 @@ void menu_act_on_item(Menu_t *menu)
 
 void menu_do_routine()
 {
-  Menu_t main_menu;
+  //Menu_t main_menu;
 
   menu_init(&main_menu);
   menu_move(&main_menu);

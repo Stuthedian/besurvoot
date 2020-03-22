@@ -26,6 +26,7 @@ typedef struct Menu
   Env_t env;
 } Menu_t;
 
+//extern Menu_t main_menu;
 
 void sig_winch(int signo);
 
