@@ -2,6 +2,9 @@
 #define _MENU_H_
 
 #include <curses.h>
+#include "check.h"
+
+#define CHECK_ERR CHECK(==, ERR);
 
 #define TERMINAL_WIDTH 80
 #define BOX_OFFSET 2
@@ -25,8 +28,6 @@ typedef struct Menu
 
   Env_t env;
 } Menu_t;
-
-//extern Menu_t main_menu;
 
 void sig_winch(int signo);
 

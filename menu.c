@@ -19,25 +19,32 @@ void sig_winch(int signo)
 
 void ncurses_init()
 {
-  initscr();
-  signal(SIGWINCH, sig_winch);
-  cbreak();
-  curs_set(0);
-  start_color();
-  noecho();
-  refresh();
-  init_pair(1, COLOR_YELLOW, COLOR_BLUE);
-  init_pair(2, COLOR_YELLOW, COLOR_CYAN);
-  init_pair(3, COLOR_WHITE, COLOR_BLACK);
-  keypad(stdscr, 1);
-  nodelay(stdscr, 1);
-  bkgd(COLOR_PAIR(2));
-  refresh();
+  initscr() CHECK_IS_NULL;
+  cbreak() CHECK_ERR;
+  noecho() CHECK_ERR;
+
+  signal(SIGWINCH, sig_winch) CHECK(==, SIG_ERR);
+
+  curs_set(FALSE) CHECK_ERR;
+
+  start_color() CHECK_ERR;
+  init_pair(1, COLOR_YELLOW, COLOR_BLUE) CHECK_ERR;
+  init_pair(2, COLOR_YELLOW, COLOR_CYAN) CHECK_ERR;
+  init_pair(3, COLOR_WHITE, COLOR_BLACK) CHECK_ERR;
+  bkgd(COLOR_PAIR(2)) CHECK_ERR;
+
+  nonl();//Always 'OK'
+  intrflush(stdscr, FALSE) CHECK_ERR;
+  keypad(stdscr, TRUE) CHECK_ERR;
+
+  nodelay(stdscr, 1) CHECK_ERR;
+
+  refresh() CHECK_ERR;
 }
 
 void ncurses_destroy()
 {
-endwin();
+    endwin() CHECK(==, ERR);
 }
 
 void menu_init(Menu_t *menu)
@@ -148,7 +155,7 @@ void menu_move(Menu_t *menu)
               menu_go_down(menu); break;
           case 'k': case KEY_UP:
               menu_go_up(menu); break;
-          case '\n':
+          case '\r':
               menu_act_on_item(menu); break;
           case 'q': return;
           case ERR: default: break;

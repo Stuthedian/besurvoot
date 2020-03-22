@@ -13,7 +13,7 @@ $(objdir)/check.o: check.c check.h
 	$(CC) $(CFLAGS) $< -c -o $@
 
 $(objdir)/menu.o $(objdir)/main.o: menu.h
-$(objdir)/menu.o: menu.c
+$(objdir)/menu.o: menu.c check.h
 	$(CC) $(CFLAGS) $< -c -o $@
 $(objdir)/main.o: main.c
 	$(CC) $(CFLAGS) $< -c -o $@
