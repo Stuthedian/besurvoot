@@ -6,7 +6,7 @@ bindir = bin
 objdir = bin/obj
 sources = menu.c main.c check.c
 objects = $(addprefix $(objdir)/, $(sources:.c=.o))
-target = $(bindir)/main
+target = $(bindir)/besurvoot
 
 all: $(target) 
 $(objdir)/check.o: check.c check.h
