@@ -50,7 +50,45 @@ void sig_winch(int signo)
   box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
   wrefresh(main_menu.menu_wnd) CHECK_ERR;
     }
-    else menu_init(&main_menu);
+    //pane shrank
+    else
+    {
+  const int menu_box_offset = BOX_OFFSET;
+  main_menu.env.terminal_width = size.ws_col;
+  main_menu.env.terminal_height = size.ws_row;
+  main_menu.env.max_items_on_screen = main_menu.env.terminal_height - menu_box_offset;
+
+  int menu_ncurses_y = 0;
+  int menu_ncurses_x = 0;
+
+  main_menu.menu_wnd = newwin(main_menu.env.terminal_height, main_menu.env.terminal_width, menu_ncurses_y,
+                          menu_ncurses_x);
+  main_menu.menu_wnd CHECK_IS_NULL;
+  main_menu.items = malloc(main_menu.env.max_items_on_screen * sizeof(WINDOW));
+  main_menu.items CHECK_IS_NULL;
+
+  int menu_item_width = main_menu.env.terminal_width - menu_box_offset;
+
+  if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
+  {
+      main_menu.screen_idx--;
+      main_menu.current_idx--;
+      //main_menu.top_of_text_array--;
+  }
+  for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
+      main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
+              i + menu_box_offset / 2,
+              0 + menu_box_offset / 2);
+      main_menu.items[i] CHECK_IS_NULL;
+      wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
+  }
+
+  wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+  wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+
+  box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
+  wrefresh(main_menu.menu_wnd) CHECK_ERR;
+    }
 }
 
 void ncurses_init()

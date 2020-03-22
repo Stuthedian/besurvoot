@@ -1,6 +1,5 @@
 CC=gcc
 CFLAGS = -g -Wall -Wfatal-errors -Wsign-compare -fstack-protector
-.PHONY: all
 
 bindir = bin
 objdir = bin/obj
@@ -8,6 +7,7 @@ sources = menu.c main.c check.c
 objects = $(addprefix $(objdir)/, $(sources:.c=.o))
 target = $(bindir)/besurvoot
 
+.PHONY: all
 all: $(target) 
 $(objdir)/check.o: check.c check.h
 	$(CC) $(CFLAGS) $< -c -o $@
