@@ -1,5 +1,7 @@
+#define _POSIX_C_SOURCE 1
 #include <termios.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <string.h>
@@ -93,11 +95,16 @@ void sig_winch(int signo)
 
 void ncurses_init()
 {
+  const struct sigaction sa_handler =   
+  {
+      .sa_handler = sig_winch
+  };
+
   initscr() CHECK_IS_NULL;
   cbreak() CHECK_ERR;
   noecho() CHECK_ERR;
 
-  signal(SIGWINCH, sig_winch) CHECK(==, SIG_ERR);
+  sigaction(SIGWINCH, &sa_handler, NULL) CHECK_IS_NEGATIVE_ONE;
 
   curs_set(FALSE) CHECK_ERR;
 

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -g -Wall -Wfatal-errors -Wsign-compare -fstack-protector
+CFLAGS = -g -std=c11 -Wall -Wfatal-errors -Wsign-compare -fstack-protector-all
 
 bindir = bin
 objdir = bin/obj
