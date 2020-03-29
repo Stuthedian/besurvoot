@@ -39,12 +39,17 @@ void sig_winch(int signo)
   int menu_item_width = main_menu.env.terminal_width - menu_box_offset;
 
   int to_show = NUM_MENU_ITEMS - 1 - main_menu.top_of_text_array + 1;
-  if(terminal_height_change + main_menu.top_of_text_array > NUM_MENU_ITEMS -1)
+  if(main_menu.env.max_items_on_screen > to_show)
+  //if(terminal_height_change + main_menu.top_of_text_array > NUM_MENU_ITEMS -1)
   {
   main_menu.top_of_text_array -= terminal_height_change;
-  main_menu.screen_idx += terminal_height_change;
+  if(main_menu.top_of_text_array < 0)
+      main_menu.top_of_text_array = 0;
+  else
+      main_menu.screen_idx += terminal_height_change;
+  //if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
+      //main_menu.top_of_text_array = main_menu.env.max_items_on_screen;
   }
-  //main_menu.current_idx = 0;
   for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
       main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
               i + menu_box_offset / 2,
