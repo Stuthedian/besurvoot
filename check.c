@@ -18,6 +18,7 @@ void print_error_message_and_exit(char* filename, int line, char* func, int errn
 			fprintf(stderr, "strerror_r failed. Error number is: %d\n", errno);
 		else
 			fputs("strerror_r failed. Unknown failure", stderr);
+        fprintf(stderr, "--%s,  line %d: %s \n", filename, line, func);
 		exit(EXIT_FAILURE);
 	}
 	fprintf(stderr, "--%s,  line %d: %s %s\n", filename, line, func, buf);
