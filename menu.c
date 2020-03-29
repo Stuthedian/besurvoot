@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#undef _POSIX_C_SOURCE
 #include "menu.h"
 
 Menu_t main_menu;
@@ -20,8 +21,10 @@ void sig_winch(int signo)
     if(main_menu.env.terminal_height < size.ws_row)
     {
   const int menu_box_offset = BOX_OFFSET;
+  int terminal_height_change = size.ws_row - main_menu.env.terminal_height;
   main_menu.env.terminal_width = size.ws_col;
   main_menu.env.terminal_height = size.ws_row;
+  int last =main_menu.env.max_items_on_screen; 
   main_menu.env.max_items_on_screen = main_menu.env.terminal_height - menu_box_offset;
 
   int menu_ncurses_y = 0;
@@ -35,9 +38,13 @@ void sig_winch(int signo)
 
   int menu_item_width = main_menu.env.terminal_width - menu_box_offset;
 
-  //main_menu.screen_idx = 0;
+  int to_show = NUM_MENU_ITEMS - 1 - main_menu.top_of_text_array + 1;
+  if(terminal_height_change + main_menu.top_of_text_array > NUM_MENU_ITEMS -1)
+  {
+  main_menu.top_of_text_array -= terminal_height_change;
+  main_menu.screen_idx += terminal_height_change;
+  }
   //main_menu.current_idx = 0;
-  //main_menu.top_of_text_array = 0;
   for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
       main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
               i + menu_box_offset / 2,
@@ -57,6 +64,7 @@ void sig_winch(int signo)
     {
   const int menu_box_offset = BOX_OFFSET;
   main_menu.env.terminal_width = size.ws_col;
+  int terminal_height_change = main_menu.env.terminal_height - size.ws_row;
   main_menu.env.terminal_height = size.ws_row;
   main_menu.env.max_items_on_screen = main_menu.env.terminal_height - menu_box_offset;
 
@@ -73,9 +81,8 @@ void sig_winch(int signo)
 
   if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
   {
-      main_menu.screen_idx--;
-      main_menu.current_idx--;
-      //main_menu.top_of_text_array--;
+      main_menu.screen_idx -= terminal_height_change;
+      main_menu.top_of_text_array += terminal_height_change;
   }
   for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
       main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
