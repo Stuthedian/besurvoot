@@ -1,11 +1,10 @@
-#define _POSIX_C_SOURCE 1
+#define _POSIX_C_SOURCE  1
+#include <signal.h>
+#include <string.h>
 #include <termios.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
 #include <sys/ioctl.h>
-#include <string.h>
-#undef _POSIX_C_SOURCE
 #include "menu.h"
 
 Menu_t main_menu;
@@ -58,7 +57,7 @@ void sig_winch(int signo)
                 i + menu_box_offset / 2,
                 0 + menu_box_offset / 2);
         main_menu.items[i] CHECK_IS_NULL;
-        wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
+        //wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
     }
     wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
     wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
@@ -117,11 +116,11 @@ void menu_init(Menu_t *menu)
     menu->items CHECK_IS_NULL;
 
 
-    strcpy(menu->text[0], "show firmware");
+    /*strcpy(menu->text[0], "show firmware");
     strcpy(menu->text[1], "reload system");
     strcpy(menu->text[2], "show running config");
     strcpy(menu->text[3], "show msdp vrf test peers");
-    strcpy(menu->text[4], "Exit");
+    strcpy(menu->text[4], "Exit");*/
 
     menu->screen_idx = 0;
     menu->current_idx = 0;
@@ -132,7 +131,7 @@ void menu_init(Menu_t *menu)
                 i + menu_box_offset / 2,
                 0 + menu_box_offset / 2);
         menu->items[i] CHECK_IS_NULL;
-        wprintw(menu->items[i], menu->text[i]) CHECK_ERR;
+        //wprintw(menu->items[i], menu->text[i]) CHECK_ERR;
     }
 
     wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
@@ -164,7 +163,7 @@ void menu_go_down(Menu_t *menu)
             menu->top_of_text_array++;
             for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
                 wclear(menu->items[i]) CHECK_ERR;
-                wprintw(menu->items[i], menu->text[j]) CHECK_ERR;
+                //wprintw(menu->items[i], menu->text[j]) CHECK_ERR;
                 wrefresh(menu->items[i]) CHECK_ERR;
             }
             menu->screen_idx--;
@@ -186,7 +185,7 @@ void menu_go_up(Menu_t *menu)
             menu->top_of_text_array--;
             for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
                 wclear(menu->items[i]) CHECK_ERR;
-                wprintw(menu->items[i], menu->text[j]) CHECK_ERR;
+                //wprintw(menu->items[i], menu->text[j]) CHECK_ERR;
                 wrefresh(menu->items[i]) CHECK_ERR;
             }
             menu->screen_idx++;
@@ -220,15 +219,15 @@ void menu_act_on_item(Menu_t *menu)
 {
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
-  char* command = menu->text[menu->current_idx];
+  //char* command = menu->text[menu->current_idx];
   char* suffix = "\" Enter";
 
-  result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
+  //result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
   result_command CHECK_IS_NULL;
   result_command[0] = '\0';
 
   strcat(result_command, prefix);
-  strcat(result_command, command);
+  //strcat(result_command, command);
   strcat(result_command, suffix);
 
   system(result_command) CHECK_IS_NEGATIVE_ONE;

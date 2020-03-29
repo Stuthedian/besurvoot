@@ -3,7 +3,7 @@ CFLAGS = -g -std=c11 -Wall -Wfatal-errors -Wsign-compare -fstack-protector-all
 
 bindir = bin
 objdir = bin/obj
-sources = menu.c main.c check.c
+sources = check.c linked_list.c menu.c main.c
 objects = $(addprefix $(objdir)/, $(sources:.c=.o))
 target = $(bindir)/besurvoot
 
@@ -11,14 +11,14 @@ target = $(bindir)/besurvoot
 all: $(target) 
 $(objdir)/check.o: check.c check.h
 	$(CC) $(CFLAGS) $< -c -o $@
-
-$(objdir)/menu.o $(objdir)/main.o: menu.h
-$(objdir)/menu.o: menu.c check.h
+$(objdir)/linked_list.o: linked_list.c linked_list.h check.h
 	$(CC) $(CFLAGS) $< -c -o $@
-$(objdir)/main.o: main.c
+$(objdir)/menu.o: menu.c menu.h check.h linked_list.h 
+	$(CC) $(CFLAGS) $< -c -o $@
+$(objdir)/main.o: main.c menu.h
 	$(CC) $(CFLAGS) $< -c -o $@
 $(target): $(objects)
-	$(CC) $(CFLAGS) $^ -o $@ -lncurses && ./$@
+	$(CC) $(CFLAGS) $^ -o $@ -lncurses
 
 
 .PHONY: clean

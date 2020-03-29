@@ -3,10 +3,10 @@
 
 #include <curses.h>
 #include "check.h"
+#include "linked_list.h"
 
 #define CHECK_ERR CHECK(==, ERR);
 
-#define TERMINAL_WIDTH 80
 #define BOX_OFFSET 2
 #define NUM_MENU_ITEMS 5
 
@@ -15,11 +15,20 @@ typedef struct Env
     int max_items_on_screen;
 } Env_t;
 
+typedef enum User_action
+{
+    UA_QUIT = 'q',
+    UA_DOWN = 'j',
+    UA_UP = 'k',
+    UA_ENTER = '\r',
+    UA_NEW_ITEM = 'O',
+} User_action_e;
+
 typedef struct Menu
 {
   WINDOW* menu_wnd;
   WINDOW** items;
-  char text[NUM_MENU_ITEMS][TERMINAL_WIDTH];
+  Linked_list_t text_list;
   int top_of_text_array;
   int current_idx;
   int screen_idx;
