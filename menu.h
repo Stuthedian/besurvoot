@@ -12,8 +12,6 @@
 
 typedef struct Env
 {
-    int terminal_width;
-    int terminal_height;
     int max_items_on_screen;
 } Env_t;
 

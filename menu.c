@@ -14,95 +14,57 @@ void sig_winch(int signo)
 {
     struct winsize size;
     ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size) CHECK_IS_NEGATIVE_ONE;
+    const int terminal_height_change = size.ws_row - LINES;
     resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
     menu_destroy(&main_menu);
     refresh() CHECK_ERR;
-    //pane enlarged
-    if(main_menu.env.terminal_height < size.ws_row)
+
+    const int terminal_height_change_abs = abs(terminal_height_change);
+    const int menu_box_offset = BOX_OFFSET;
+    const int menu_ncurses_y = 0;
+    const int menu_ncurses_x = 0;
+    const int menu_item_width = COLS - menu_box_offset;
+    main_menu.env.max_items_on_screen = LINES - menu_box_offset;
+
+    main_menu.menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
+    main_menu.menu_wnd CHECK_IS_NULL;
+    main_menu.items = malloc(main_menu.env.max_items_on_screen * sizeof(WINDOW*));
+    main_menu.items CHECK_IS_NULL;
+
+    
+    if(terminal_height_change > 0)//pane enlarged
     {
-  const int menu_box_offset = BOX_OFFSET;
-  int terminal_height_change = size.ws_row - main_menu.env.terminal_height;
-  main_menu.env.terminal_width = size.ws_col;
-  main_menu.env.terminal_height = size.ws_row;
-  int last =main_menu.env.max_items_on_screen; 
-  main_menu.env.max_items_on_screen = main_menu.env.terminal_height - menu_box_offset;
-
-  int menu_ncurses_y = 0;
-  int menu_ncurses_x = 0;
-
-  main_menu.menu_wnd = newwin(main_menu.env.terminal_height, main_menu.env.terminal_width, menu_ncurses_y,
-                          menu_ncurses_x);
-  main_menu.menu_wnd CHECK_IS_NULL;
-  main_menu.items = malloc(main_menu.env.max_items_on_screen * sizeof(WINDOW));
-  main_menu.items CHECK_IS_NULL;
-
-  int menu_item_width = main_menu.env.terminal_width - menu_box_offset;
-
-  int to_show = NUM_MENU_ITEMS - 1 - main_menu.top_of_text_array + 1;
-  if(main_menu.env.max_items_on_screen > to_show)
-  //if(terminal_height_change + main_menu.top_of_text_array > NUM_MENU_ITEMS -1)
-  {
-  main_menu.top_of_text_array -= terminal_height_change;
-  if(main_menu.top_of_text_array < 0)
-      main_menu.top_of_text_array = 0;
-  else
-      main_menu.screen_idx += terminal_height_change;
-  //if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
-      //main_menu.top_of_text_array = main_menu.env.max_items_on_screen;
-  }
-  for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
-      main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
-              i + menu_box_offset / 2,
-              0 + menu_box_offset / 2);
-      main_menu.items[i] CHECK_IS_NULL;
-      wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
-  }
-
-  wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-  wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-
-  box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
-  wrefresh(main_menu.menu_wnd) CHECK_ERR;
+        int to_show = NUM_MENU_ITEMS - 1 - main_menu.top_of_text_array + 1;
+        if(main_menu.env.max_items_on_screen > to_show)
+        {
+            main_menu.top_of_text_array -= terminal_height_change_abs;
+            if(main_menu.top_of_text_array < 0)
+                main_menu.top_of_text_array = 0;
+            else
+                main_menu.screen_idx += terminal_height_change_abs;
+        }
     }
-    //pane shrank
-    else
+    else if(terminal_height_change < 0)//pane shrank
     {
-  const int menu_box_offset = BOX_OFFSET;
-  main_menu.env.terminal_width = size.ws_col;
-  int terminal_height_change = main_menu.env.terminal_height - size.ws_row;
-  main_menu.env.terminal_height = size.ws_row;
-  main_menu.env.max_items_on_screen = main_menu.env.terminal_height - menu_box_offset;
-
-  int menu_ncurses_y = 0;
-  int menu_ncurses_x = 0;
-
-  main_menu.menu_wnd = newwin(main_menu.env.terminal_height, main_menu.env.terminal_width, menu_ncurses_y,
-                          menu_ncurses_x);
-  main_menu.menu_wnd CHECK_IS_NULL;
-  main_menu.items = malloc(main_menu.env.max_items_on_screen * sizeof(WINDOW));
-  main_menu.items CHECK_IS_NULL;
-
-  int menu_item_width = main_menu.env.terminal_width - menu_box_offset;
-
-  if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
-  {
-      main_menu.screen_idx -= terminal_height_change;
-      main_menu.top_of_text_array += terminal_height_change;
-  }
-  for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
-      main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
-              i + menu_box_offset / 2,
-              0 + menu_box_offset / 2);
-      main_menu.items[i] CHECK_IS_NULL;
-      wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
-  }
-
-  wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-  wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-
-  box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
-  wrefresh(main_menu.menu_wnd) CHECK_ERR;
+        if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
+        {
+            main_menu.screen_idx -= terminal_height_change_abs;
+            main_menu.top_of_text_array += terminal_height_change_abs;
+        }
     }
+
+    for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
+        main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
+                i + menu_box_offset / 2,
+                0 + menu_box_offset / 2);
+        main_menu.items[i] CHECK_IS_NULL;
+        wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
+    }
+    wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+    wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+
+    box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
+    wrefresh(main_menu.menu_wnd) CHECK_ERR;
 }
 
 void ncurses_init()
@@ -142,46 +104,42 @@ void ncurses_destroy()
 
 void menu_init(Menu_t *menu)
 {
-  const int menu_box_offset = BOX_OFFSET;
-  struct winsize size;
-  ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size) CHECK_IS_NEGATIVE_ONE;
-  menu->env.terminal_width = size.ws_col;
-  menu->env.terminal_height = size.ws_row;
-  menu->env.max_items_on_screen = menu->env.terminal_height - menu_box_offset;
+    const int menu_box_offset = BOX_OFFSET;
+    const int menu_ncurses_y = 0;
+    const int menu_ncurses_x = 0;
+    const int menu_item_width = COLS - menu_box_offset;
+    menu->env.max_items_on_screen = LINES - menu_box_offset;
 
-  int menu_ncurses_y = 0;
-  int menu_ncurses_x = 0;
 
-  menu->menu_wnd = newwin(menu->env.terminal_height, menu->env.terminal_width, menu_ncurses_y,
-                          menu_ncurses_x);
-  menu->menu_wnd CHECK_IS_NULL;
-  menu->items = malloc(menu->env.max_items_on_screen * sizeof(WINDOW));
-  menu->items CHECK_IS_NULL;
+    menu->menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
+    menu->menu_wnd CHECK_IS_NULL;
+    menu->items = malloc(menu->env.max_items_on_screen * sizeof(WINDOW*));
+    menu->items CHECK_IS_NULL;
 
-  int menu_item_width = menu->env.terminal_width - menu_box_offset;
 
-  strcpy(menu->text[0], "show firmware");
-  strcpy(menu->text[1], "reload system");
-  strcpy(menu->text[2], "show running config");
-  strcpy(menu->text[3], "show msdp vrf test peers");
-  strcpy(menu->text[4], "Exit");
+    strcpy(menu->text[0], "show firmware");
+    strcpy(menu->text[1], "reload system");
+    strcpy(menu->text[2], "show running config");
+    strcpy(menu->text[3], "show msdp vrf test peers");
+    strcpy(menu->text[4], "Exit");
 
-  menu->screen_idx = 0;
-  menu->current_idx = 0;
-  menu->top_of_text_array = 0;
-  for (int i = 0; i < menu->env.max_items_on_screen && i < NUM_MENU_ITEMS; i++) {
-      menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
-              i + menu_box_offset / 2,
-              0 + menu_box_offset / 2);
-      menu->items[i] CHECK_IS_NULL;
-      wprintw(menu->items[i], menu->text[i]) CHECK_ERR;
-  }
+    menu->screen_idx = 0;
+    menu->current_idx = 0;
+    menu->top_of_text_array = 0;
 
-  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-  wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+    for (int i = 0; i < menu->env.max_items_on_screen && i < NUM_MENU_ITEMS; i++) {
+        menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
+                i + menu_box_offset / 2,
+                0 + menu_box_offset / 2);
+        menu->items[i] CHECK_IS_NULL;
+        wprintw(menu->items[i], menu->text[i]) CHECK_ERR;
+    }
 
-  box(menu->menu_wnd, '|', '-') CHECK_ERR;
-  wrefresh(menu->menu_wnd) CHECK_ERR;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+
+    box(menu->menu_wnd, '|', '-') CHECK_ERR;
+    wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
 void menu_destroy(Menu_t *menu)
