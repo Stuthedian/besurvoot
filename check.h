@@ -1,9 +1,6 @@
 #ifndef CHECK_H
 #define CHECK_H
 
-#define _POSIX_C_SOURCE  200112L
-#define _GNU_SOURCE 0
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,6 +12,8 @@
 #define CHECK_IS_NULL CHECK(==, NULL);
 #define INTERPRET_AS_ERRNUM_IF_NOT_ZERO(func) interpret_as_errnum_if_not_zero(__FILE__,  __LINE__, #func, func);
 #define PARTIAL_IF partial_if(__FILE__,  __LINE__);
+
+int strerror_r(int errnum, char *buf, size_t buflen);
 
 void interpret_as_errnum_if_not_zero(char* filename, int line, char* func, int status);
 void print_error_message_and_exit(char* filename, int line, char* func, int errnum);
