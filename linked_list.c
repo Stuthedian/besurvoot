@@ -6,7 +6,7 @@ void list_add(struct Linked_List* ll_list, char* str)
 {
 	struct Linked_List_Node* ll_node = malloc(sizeof(struct Linked_List_Node));
     ll_node CHECK_IS_NULL;
-    memcpy(ll_node->text, str, STRING_WIDTH);
+    strncpy(ll_node->text, str, STRING_WIDTH);
 	
 	if(ll_list->first == NULL && ll_list->last == NULL)
 	{
@@ -36,4 +36,32 @@ void list_free(struct Linked_List* ll_list)
 	
 	ll_list->first = NULL;
 	ll_list->last = NULL;
+}
+
+char* list_find(const Linked_list_t ll_list, int index)
+{
+    char* result_str = NULL;
+    struct Linked_List_Node* node = ll_list.first;
+
+    if(index < 0)
+        goto EXIT;
+
+    while(1)
+    {
+        if(index > 0)
+        {
+            node = node->next; 
+            if(node == NULL)
+                goto EXIT;
+            index--;
+        }
+        else
+        {
+            result_str = node->text;
+            goto EXIT;
+        }
+    }
+
+EXIT:
+    return result_str;
 }

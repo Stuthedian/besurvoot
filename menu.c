@@ -30,7 +30,6 @@ void sig_winch(int signo)
     main_menu.items = malloc(main_menu.env.max_items_on_screen * sizeof(WINDOW*));
     main_menu.items CHECK_IS_NULL;
 
-    
     if(terminal_height_change > 0)//pane enlarged
     {
         int to_show = NUM_MENU_ITEMS - 1 - main_menu.top_of_text_array + 1;
@@ -57,7 +56,7 @@ void sig_winch(int signo)
                 i + menu_box_offset / 2,
                 0 + menu_box_offset / 2);
         main_menu.items[i] CHECK_IS_NULL;
-        //wprintw(main_menu.items[i], main_menu.text[j]) CHECK_ERR;
+        wprintw(main_menu.items[i], list_find(main_menu.text_list, j)) CHECK_ERR;
     }
     wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
     wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
@@ -68,7 +67,7 @@ void sig_winch(int signo)
 
 void ncurses_init()
 {
-  const struct sigaction sa_handler =   
+  const struct sigaction sa_handler =
   {
       .sa_handler = sig_winch
   };
@@ -116,11 +115,11 @@ void menu_init(Menu_t *menu)
     menu->items CHECK_IS_NULL;
 
 
-    /*strcpy(menu->text[0], "show firmware");
-    strcpy(menu->text[1], "reload system");
-    strcpy(menu->text[2], "show running config");
-    strcpy(menu->text[3], "show msdp vrf test peers");
-    strcpy(menu->text[4], "Exit");*/
+    list_add(&menu->text_list,  "show firmware");
+    list_add(&menu->text_list,  "reload system");
+    list_add(&menu->text_list,  "show running config");
+    list_add(&menu->text_list,  "show msdp vrf test peers");
+    list_add(&menu->text_list,  "Exit");
 
     menu->screen_idx = 0;
     menu->current_idx = 0;
@@ -131,7 +130,7 @@ void menu_init(Menu_t *menu)
                 i + menu_box_offset / 2,
                 0 + menu_box_offset / 2);
         menu->items[i] CHECK_IS_NULL;
-        //wprintw(menu->items[i], menu->text[i]) CHECK_ERR;
+        wprintw(menu->items[i], list_find(menu->text_list, i)) CHECK_ERR;
     }
 
     wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
@@ -143,12 +142,12 @@ void menu_init(Menu_t *menu)
 
 void menu_destroy(Menu_t *menu)
 {
-  for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
-    delwin(menu->items[i]) CHECK_ERR;
-  }
-  free(menu->items);
+    for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
+        delwin(menu->items[i]) CHECK_ERR;
+    }
+    free(menu->items);
 
-  delwin(menu->menu_wnd) CHECK_ERR;
+    delwin(menu->menu_wnd) CHECK_ERR;
 }
 
 void menu_go_down(Menu_t *menu)
@@ -163,7 +162,7 @@ void menu_go_down(Menu_t *menu)
             menu->top_of_text_array++;
             for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
                 wclear(menu->items[i]) CHECK_ERR;
-                //wprintw(menu->items[i], menu->text[j]) CHECK_ERR;
+                wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
                 wrefresh(menu->items[i]) CHECK_ERR;
             }
             menu->screen_idx--;
@@ -185,7 +184,7 @@ void menu_go_up(Menu_t *menu)
             menu->top_of_text_array--;
             for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < NUM_MENU_ITEMS; i++, j++) {
                 wclear(menu->items[i]) CHECK_ERR;
-                //wprintw(menu->items[i], menu->text[j]) CHECK_ERR;
+                wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
                 wrefresh(menu->items[i]) CHECK_ERR;
             }
             menu->screen_idx++;
@@ -197,11 +196,11 @@ void menu_go_up(Menu_t *menu)
 
 void menu_move(Menu_t *menu)
 {
-  while (1) 
+  while (1)
   {
       int ch = getch();
 
-      switch (ch) 
+      switch (ch)
       {
           case 'j': case KEY_DOWN:
               menu_go_down(menu); break;
@@ -219,15 +218,15 @@ void menu_act_on_item(Menu_t *menu)
 {
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
-  //char* command = menu->text[menu->current_idx];
+  char* command = list_find(menu->text_list, menu->current_idx);
   char* suffix = "\" Enter";
 
-  //result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
+  result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);
   result_command CHECK_IS_NULL;
   result_command[0] = '\0';
 
   strcat(result_command, prefix);
-  //strcat(result_command, command);
+  strcat(result_command, command);
   strcat(result_command, suffix);
 
   system(result_command) CHECK_IS_NEGATIVE_ONE;
@@ -239,5 +238,6 @@ void menu_do_routine()
 {
   menu_init(&main_menu);
   menu_move(&main_menu);
+  list_free(&main_menu.text_list);
   menu_destroy(&main_menu);
 }
