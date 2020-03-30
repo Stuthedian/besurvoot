@@ -14,6 +14,7 @@ typedef struct Linked_List
 {
 	struct Linked_List_Node* first;
 	struct Linked_List_Node* last;
+    int count;
 } Linked_list_t;
 
 void list_add(Linked_list_t* ll_list, char* str);

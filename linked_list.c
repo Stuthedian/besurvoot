@@ -22,6 +22,7 @@ void list_add(struct Linked_List* ll_list, char* str)
 		ll_list->last = ll_node;
 		ll_node->next = NULL;
 	}
+    ll_list->count++;
 }
 
 void list_free(struct Linked_List* ll_list)
@@ -34,6 +35,7 @@ void list_free(struct Linked_List* ll_list)
 		ll_list->last = next_to_free;
 	}
 	
+    ll_list->count = -1;
 	ll_list->first = NULL;
 	ll_list->last = NULL;
 }

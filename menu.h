@@ -8,7 +8,6 @@
 #define CHECK_ERR CHECK(==, ERR);
 
 #define BOX_OFFSET 2
-#define NUM_MENU_ITEMS 5
 
 typedef struct Env
 {
