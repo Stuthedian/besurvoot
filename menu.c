@@ -83,7 +83,7 @@ void ncurses_init()
   start_color() CHECK_ERR;
   init_pair(1, COLOR_YELLOW, COLOR_BLUE) CHECK_ERR;
   init_pair(2, COLOR_YELLOW, COLOR_CYAN) CHECK_ERR;
-  init_pair(3, COLOR_WHITE, COLOR_BLACK) CHECK_ERR;
+  init_pair(3, COLOR_GREEN, COLOR_BLACK) CHECK_ERR;
   bkgd(COLOR_PAIR(2)) CHECK_ERR;
 
   nonl() CHECK_ERR;
@@ -202,16 +202,58 @@ void menu_move(Menu_t *menu)
 
       switch (ch)
       {
-          case 'j': case KEY_DOWN:
+          case UA_DOWN: case KEY_DOWN:
               menu_go_down(menu); break;
-          case 'k': case KEY_UP:
+          case UA_UP: case KEY_UP:
               menu_go_up(menu); break;
-          case '\r':
+          case UA_ENTER:
               menu_act_on_item(menu); break;
-          case 'q': return;
+          case UA_NEW_ITEM: 
+              menu_add_item(menu); break;
+          case UA_QUIT: return;
+                        
           case ERR: default: break;
       }
   }
+}
+
+void menu_add_item(Menu_t *menu)
+{
+/*
+ * clear last line of screen, i. e. border of box
+ * use this line to hold user input
+ * all user keys interpreted as is until enter key is pressed
+ * after that:
+ * redraw box border
+ * add new entry to linked list
+ * set current_idx equal to new item
+ * redraw screen, screen_idx should highlight new item
+ * how to redraw screen: for example use function menu_go_down
+ * until current_idx reaches new item
+ *
+ * create input_wnd instead?
+ * */
+    char* user_input = NULL;
+    const int menu_item_width = COLS - BOX_OFFSET;
+    user_input = malloc(menu_item_width * sizeof(char) + 1);
+    user_input CHECK_IS_NULL;
+
+    menu->input_wnd = derwin(menu->menu_wnd, 1, menu_item_width,
+                LINES - 1,
+                0 + BOX_OFFSET / 2);
+    menu->input_wnd CHECK_IS_NULL;
+    wbkgd(menu->input_wnd, COLOR_PAIR(3)) CHECK_ERR;
+    werase(menu->input_wnd);
+
+    echo() CHECK_ERR;
+    wgetnstr(menu->input_wnd, user_input, menu_item_width) CHECK_ERR;
+    noecho() CHECK_ERR;
+
+    delwin(menu->input_wnd) CHECK_ERR;
+    free(user_input);
+
+    box(menu->menu_wnd, '|', '-') CHECK_ERR;
+    wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
 void menu_act_on_item(Menu_t *menu)

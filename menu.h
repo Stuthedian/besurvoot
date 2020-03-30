@@ -27,6 +27,7 @@ typedef enum User_action
 typedef struct Menu
 {
   WINDOW* menu_wnd;
+  WINDOW* input_wnd;
   WINDOW** items;
   Linked_list_t text_list;
   int top_of_text_array;
@@ -47,6 +48,7 @@ void menu_go_up(Menu_t *menu);
 void menu_go_down(Menu_t *menu);
 void menu_move(Menu_t *menu);
 
+void menu_add_item(Menu_t *menu);
 void menu_act_on_item(Menu_t *menu);
 
 void menu_do_routine();
