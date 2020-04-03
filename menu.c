@@ -158,11 +158,11 @@ void menu_init(Menu_t *menu)
 
 void menu_destroy(Menu_t *menu)
 {
-    for (int i = 0, j = menu->top_of_text_list; i < menu->max_items_on_screen && j < menu->text_list.count; i++, j++) {
+    for (int i = 0, j = menu->top_of_text_list; i < menu->max_items_on_screen && j < menu->text_list.count; i++, j++)
         delwin(menu->items[i]) CHECK_ERR;
-    }
-    free(menu->items);
 
+    list_free(&menu->text_list);
+    free(menu->items);
     delwin(menu->menu_wnd) CHECK_ERR;
 }
 
@@ -224,10 +224,10 @@ void menu_move(Menu_t *menu)
               menu_go_up(menu); break;
           case UA_ENTER:
               menu_act_on_item(menu); break;
-          case UA_NEW_ITEM: 
+          case UA_NEW_ITEM:
               menu_add_item(menu); break;
           case UA_QUIT: return;
-                        
+
           case ERR: default: break;
       }
   }
@@ -300,5 +300,4 @@ void menu_do_routine()
   menu_init(&main_menu);
   menu_move(&main_menu);
   menu_destroy(&main_menu);
-  list_free(&main_menu.text_list);
 }
