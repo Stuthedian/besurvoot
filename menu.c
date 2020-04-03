@@ -15,43 +15,56 @@ void sig_winch(int signo)
     ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size) CHECK_IS_NEGATIVE_ONE;
     const int terminal_height_change = size.ws_row - LINES;
     resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
-    menu_destroy(&main_menu);
-    refresh() CHECK_ERR;
+    //menu_destroy(&main_menu);
+    //refresh() CHECK_ERR;
 
     const int terminal_height_change_abs = abs(terminal_height_change);
     const int menu_box_offset = BOX_OFFSET;
     const int menu_ncurses_y = 0;
     const int menu_ncurses_x = 0;
     const int menu_item_width = COLS - menu_box_offset;
-    main_menu.env.max_items_on_screen = LINES - menu_box_offset;
+    main_menu.max_items_on_screen = LINES - menu_box_offset;
 
-    main_menu.menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
+    /*main_menu.menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
     main_menu.menu_wnd CHECK_IS_NULL;
-    main_menu.items = malloc(main_menu.env.max_items_on_screen * sizeof(WINDOW*));
-    main_menu.items CHECK_IS_NULL;
+    main_menu.items = malloc(main_menu.max_items_on_screen * sizeof(WINDOW*));
+    main_menu.items CHECK_IS_NULL;*/
+    /*
+     * store prev value
+     * int temp = num_items_on_screen
+     * calc how many items are need to be showed
+     * minimum of available screen space and num of items
+     * num_items_on_screen  = max_items_on_screen > list.count ? list.count : max_items_on_screen
+     * realloc items array
+     * compare (A)num_items_on_screen & (B)temp
+     * int diff = A - B
+     * if diff > 0 -> allocate new windows
+     * else diff < 0 -> free unused windows
+     *
+     * */
 
     if(terminal_height_change > 0)//pane enlarged
     {
-        int to_show = main_menu.text_list.count - 1 - main_menu.top_of_text_array + 1;
-        if(main_menu.env.max_items_on_screen > to_show)
+        int to_show = main_menu.text_list.count - 1 - main_menu.top_of_text_list + 1;
+        if(main_menu.max_items_on_screen > to_show)
         {
-            main_menu.top_of_text_array -= terminal_height_change_abs;
-            if(main_menu.top_of_text_array < 0)
-                main_menu.top_of_text_array = 0;
+            main_menu.top_of_text_list -= terminal_height_change_abs;
+            if(main_menu.top_of_text_list < 0)
+                main_menu.top_of_text_list = 0;
             else
                 main_menu.screen_idx += terminal_height_change_abs;
         }
     }
     else if(terminal_height_change < 0)//pane shrank
     {
-        if(main_menu.screen_idx >= main_menu.env.max_items_on_screen)
+        if(main_menu.screen_idx >= main_menu.max_items_on_screen)
         {
             main_menu.screen_idx -= terminal_height_change_abs;
-            main_menu.top_of_text_array += terminal_height_change_abs;
+            main_menu.top_of_text_list += terminal_height_change_abs;
         }
     }
 
-    for (int i = 0, j = main_menu.top_of_text_array; i < main_menu.env.max_items_on_screen && j < main_menu.text_list.count; i++, j++) {
+    for (int i = 0, j = main_menu.top_of_text_list; i < main_menu.max_items_on_screen && j < main_menu.text_list.count; i++, j++) {
         main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
                 i + menu_box_offset / 2,
                 0 + menu_box_offset / 2);
@@ -106,14 +119,7 @@ void menu_init(Menu_t *menu)
     const int menu_ncurses_y = 0;
     const int menu_ncurses_x = 0;
     const int menu_item_width = COLS - menu_box_offset;
-    menu->env.max_items_on_screen = LINES - menu_box_offset;
-
-
-    menu->menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
-    menu->menu_wnd CHECK_IS_NULL;
-    menu->items = malloc(menu->env.max_items_on_screen * sizeof(WINDOW*));
-    menu->items CHECK_IS_NULL;
-
+    menu->max_items_on_screen = LINES - menu_box_offset;
 
     list_add(&menu->text_list,  "show firmware");
     list_add(&menu->text_list,  "reload system");
@@ -121,11 +127,21 @@ void menu_init(Menu_t *menu)
     list_add(&menu->text_list,  "show msdp vrf test peers");
     list_add(&menu->text_list,  "Exit");
 
-    menu->screen_idx = 0;
-    menu->current_idx = 0;
-    menu->top_of_text_array = 0;
+    menu->num_items_on_screen = menu->max_items_on_screen > menu->text_list.count ? menu->text_list.count : menu->max_items_on_screen;
 
-    for (int i = 0; i < menu->env.max_items_on_screen && i < menu->text_list.count; i++) {
+    menu->menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
+    menu->menu_wnd CHECK_IS_NULL;
+    menu->items = malloc(menu->num_items_on_screen * sizeof(WINDOW*));
+    menu->items CHECK_IS_NULL;
+
+
+
+    menu->screen_idx = 0;
+    menu->text_list_idx = 0;
+    menu->top_of_text_list = 0;
+
+    for (int i = 0; i < menu->num_items_on_screen; i++)
+    {
         menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
                 i + menu_box_offset / 2,
                 0 + menu_box_offset / 2);
@@ -142,7 +158,7 @@ void menu_init(Menu_t *menu)
 
 void menu_destroy(Menu_t *menu)
 {
-    for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < menu->text_list.count; i++, j++) {
+    for (int i = 0, j = menu->top_of_text_list; i < menu->max_items_on_screen && j < menu->text_list.count; i++, j++) {
         delwin(menu->items[i]) CHECK_ERR;
     }
     free(menu->items);
@@ -152,15 +168,15 @@ void menu_destroy(Menu_t *menu)
 
 void menu_go_down(Menu_t *menu)
 {
-    if (menu->current_idx + 1 < menu->text_list.count) {
+    if (menu->text_list_idx + 1 < menu->text_list.count) {
         wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1)) CHECK_ERR;
         wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
         menu->screen_idx++;
-        menu->current_idx++;
-        if(menu->screen_idx >= menu->env.max_items_on_screen)
+        menu->text_list_idx++;
+        if(menu->screen_idx >= menu->max_items_on_screen)
         {
-            menu->top_of_text_array++;
-            for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < menu->text_list.count; i++, j++) {
+            menu->top_of_text_list++;
+            for (int i = 0, j = menu->top_of_text_list; i < menu->max_items_on_screen && j < menu->text_list.count; i++, j++) {
                 wclear(menu->items[i]) CHECK_ERR;
                 wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
                 wrefresh(menu->items[i]) CHECK_ERR;
@@ -174,15 +190,15 @@ void menu_go_down(Menu_t *menu)
 
 void menu_go_up(Menu_t *menu)
 {
-  if (menu->current_idx - 1 >= 0) {
+  if (menu->text_list_idx - 1 >= 0) {
     wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1)) CHECK_ERR;
     wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
         menu->screen_idx--;
-        menu->current_idx--;
+        menu->text_list_idx--;
         if(menu->screen_idx < 0)
         {
-            menu->top_of_text_array--;
-            for (int i = 0, j = menu->top_of_text_array; i < menu->env.max_items_on_screen && j < menu->text_list.count; i++, j++) {
+            menu->top_of_text_list--;
+            for (int i = 0, j = menu->top_of_text_list; i < menu->max_items_on_screen && j < menu->text_list.count; i++, j++) {
                 wclear(menu->items[i]) CHECK_ERR;
                 wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
                 wrefresh(menu->items[i]) CHECK_ERR;
@@ -226,10 +242,10 @@ void menu_add_item(Menu_t *menu)
  * after that:
  * redraw box border
  * add new entry to linked list
- * set current_idx equal to new item
+ * set text_list_idx equal to new item
  * redraw screen, screen_idx should highlight new item
  * how to redraw screen: for example use function menu_go_down
- * until current_idx reaches new item
+ * until text_list_idx reaches new item
  *
  * create input_wnd instead?
  * */
@@ -250,17 +266,20 @@ void menu_add_item(Menu_t *menu)
     noecho() CHECK_ERR;
 
     delwin(menu->input_wnd) CHECK_ERR;
-    free(user_input);
 
     box(menu->menu_wnd, '|', '-') CHECK_ERR;
     wrefresh(menu->menu_wnd) CHECK_ERR;
+
+    list_add(&menu->text_list, user_input);
+    free(user_input);
+    sig_winch(0);
 }
 
 void menu_act_on_item(Menu_t *menu)
 {
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
-  char* command = list_find(menu->text_list, menu->current_idx);
+  char* command = list_find(menu->text_list, menu->text_list_idx);
   char* suffix = "\" Enter";
 
   result_command = malloc(strlen(prefix) + strlen(command) + strlen(suffix) + 1);

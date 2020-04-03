@@ -9,11 +9,6 @@
 
 #define BOX_OFFSET 2
 
-typedef struct Env
-{
-    int max_items_on_screen;
-} Env_t;
-
 typedef enum User_action
 {
     UA_QUIT = 'q',
@@ -27,13 +22,15 @@ typedef struct Menu
 {
   WINDOW* menu_wnd;
   WINDOW* input_wnd;
-  WINDOW** items;
-  Linked_list_t text_list;
-  int top_of_text_array;
-  int current_idx;
-  int screen_idx;
 
-  Env_t env;
+  Linked_list_t text_list;
+  int text_list_idx; // range 0 .. list.count - 1
+  int top_of_text_list; // range 0 .. list.count - 1
+
+  WINDOW** items;
+  int num_items_on_screen; // min(max_items_on_screen, list.count)
+  int max_items_on_screen; // term_height - BOX_OFFSET
+  int screen_idx; // range 0 .. max_items_on_screen - 1
 } Menu_t;
 
 void sig_winch(int signo);
