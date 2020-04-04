@@ -23,7 +23,7 @@ $(target): $(objects)
 
 .PHONY: directories
 directories:
-	mkdir -p $(bindir) $(objdir)
+	@mkdir -p $(bindir) $(objdir)
 
 .PHONY: clean
 clean:
