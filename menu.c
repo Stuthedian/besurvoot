@@ -37,11 +37,11 @@ void sig_winch(int signo)
     int num_items_on_screen_prev = main_menu.num_items_on_screen;
     main_menu.num_items_on_screen = main_menu.max_items_on_screen > main_menu.text_list.count ? main_menu.text_list.count : main_menu.max_items_on_screen;
 
-    int diff = main_menu.num_items_on_screen - num_items_on_screen_prev;
+    int num_items_on_screen_diff = main_menu.num_items_on_screen - num_items_on_screen_prev;
     int end_of_text_list_prev = main_menu.top_of_text_list + num_items_on_screen_prev;
 
 
-    if(diff > 0)
+    if(num_items_on_screen_diff > 0)
     {
         main_menu.items = realloc(main_menu.items, main_menu.num_items_on_screen * sizeof(WINDOW*));
         main_menu.items CHECK_IS_NULL;
@@ -54,7 +54,7 @@ void sig_winch(int signo)
             main_menu.items[i] CHECK_IS_NULL;
         }
     }
-    else if(diff < 0)
+    else if(num_items_on_screen_diff < 0)
     {
         for (int i = num_items_on_screen_prev - 1; i >= main_menu.num_items_on_screen; i--)
         {
@@ -67,22 +67,29 @@ void sig_winch(int signo)
     }
     if(terminal_height_change > 0)//pane enlarged
     {
+        //num of items that are currently on screen plus items that "below" the screen
         int to_show = main_menu.text_list.count - 1 - main_menu.top_of_text_list + 1;
         if(main_menu.max_items_on_screen > to_show)
         {
-            int top_of_text_list_prev = main_menu.top_of_text_list;
-            main_menu.top_of_text_list -= terminal_height_change_abs;
-            if(main_menu.top_of_text_list < 0)
-                main_menu.top_of_text_list = 0;
-            wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
-            main_menu.screen_idx += main_menu.top_of_text_list - top_of_text_list_prev;
-            wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+            int num_below_screen = to_show - num_items_on_screen_prev; //num of items that "below" the screen
+            int num_above_screen_to_show = terminal_height_change_abs - num_below_screen;
+            if(num_above_screen_to_show > 0) //show items that "above" the screen
+            {
+                int top_of_text_list_prev = main_menu.top_of_text_list;
+                main_menu.top_of_text_list -= num_above_screen_to_show;
+                if(main_menu.top_of_text_list < 0) //do not overjump
+                    main_menu.top_of_text_list = 0;
+                wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
+                main_menu.screen_idx += top_of_text_list_prev - main_menu.top_of_text_list;
+                wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+            }
         }
     }
     else if(terminal_height_change < 0)//pane shrank
     {
         if(main_menu.screen_idx >= main_menu.max_items_on_screen)
         {
+            //probably already deallocated
             //wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
             int screen_idx_prev = main_menu.screen_idx;
             main_menu.screen_idx = main_menu.max_items_on_screen - 1;
