@@ -15,8 +15,6 @@ void sig_winch(int signo)
     ioctl(fileno(stdout), TIOCGWINSZ, (char *) &size) CHECK_IS_NEGATIVE_ONE;
     const int terminal_height_change = size.ws_row - main_menu.height;
     resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
-    //menu_destroy(&main_menu);
-    //refresh() CHECK_ERR;
 
     const int terminal_height_change_abs = abs(terminal_height_change);
     const int menu_box_offset = BOX_OFFSET;
@@ -26,26 +24,22 @@ void sig_winch(int signo)
     main_menu.height = size.ws_row;
     main_menu.max_items_on_screen = main_menu.height - menu_box_offset;
 
-    //wnd change size???
-    //free(main_menu.menu_wnd);
     if(terminal_height_change_abs != 0)
         wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
-    /*main_menu.menu_wnd = newwin(menu->height, COLS, menu_ncurses_y, menu_ncurses_x);
-    main_menu.menu_wnd CHECK_IS_NULL;*/
-    /*main_menu.items = malloc(main_menu.max_items_on_screen * sizeof(WINDOW*));
-    main_menu.items CHECK_IS_NULL;*/
+
     int num_items_on_screen_prev = main_menu.num_items_on_screen;
+    //minimum of available screen space and number of items
     main_menu.num_items_on_screen = main_menu.max_items_on_screen > main_menu.text_list.count ? main_menu.text_list.count : main_menu.max_items_on_screen;
 
     int num_items_on_screen_diff = main_menu.num_items_on_screen - num_items_on_screen_prev;
     int end_of_text_list_prev = main_menu.top_of_text_list + num_items_on_screen_prev;
 
 
-    if(num_items_on_screen_diff > 0)
+    if(num_items_on_screen_diff > 0)// allocate new windows
     {
+        //realloc before allocating new windows as we need some place to store pointers
         main_menu.items = realloc(main_menu.items, main_menu.num_items_on_screen * sizeof(WINDOW*));
         main_menu.items CHECK_IS_NULL;
-        //for (int i = num_items_on_screen_prev, j = end_of_text_list_prev; i < main_menu.num_items_on_screen; i++, j++)
         for (int i = num_items_on_screen_prev; i < main_menu.num_items_on_screen; i++)
         {
             main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
@@ -54,8 +48,9 @@ void sig_winch(int signo)
             main_menu.items[i] CHECK_IS_NULL;
         }
     }
-    else if(num_items_on_screen_diff < 0)
+    else if(num_items_on_screen_diff < 0)// deallocate unused windows
     {
+        //realloc after deallocation as we need not to loose pointers to windows
         for (int i = num_items_on_screen_prev - 1; i >= main_menu.num_items_on_screen; i--)
         {
             wclear(main_menu.items[i]) CHECK_ERR;
@@ -89,8 +84,6 @@ void sig_winch(int signo)
     {
         if(main_menu.screen_idx >= main_menu.max_items_on_screen)
         {
-            //probably already deallocated
-            //wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
             int screen_idx_prev = main_menu.screen_idx;
             main_menu.screen_idx = main_menu.max_items_on_screen - 1;
             wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
@@ -103,23 +96,6 @@ void sig_winch(int signo)
         wprintw(main_menu.items[i], list_find(main_menu.text_list, j)) CHECK_ERR;
         wrefresh(main_menu.items[i]) CHECK_ERR;
     }
-    /*
-     * store prev value
-     * int temp = num_items_on_screen
-     * calc how many items are need to be showed
-     * minimum of available screen space and num of items
-     * num_items_on_screen  = max_items_on_screen > list.count ? list.count : max_items_on_screen
-     * compare (A)num_items_on_screen & (B)temp
-     * int diff = A - B
-     * if diff > 0 -> allocate new windows
-     *  realloc items array
-     *  populate each new window with text
-     * else diff < 0 -> free unused windows
-     *  clear each window
-     *  destroy window
-     *  realloc items array
-     *
-     * */
 
 
     //wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
