@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -g -std=c11 -Wall -Wfatal-errors -Wsign-compare -fstack-protector-all
+CFLAGS = -g -std=c11 -Wall -Wfatal-errors -Wsign-compare -fstack-protector-all -Werror=implicit-function-declaration -Werror=format-security
 
 bindir = bin
 objdir = bin/obj
@@ -8,7 +8,7 @@ objects = $(addprefix $(objdir)/, $(sources:.c=.o))
 target = $(bindir)/besurvoot
 
 .PHONY: all
-all: $(target) 
+all: directories $(target)
 $(objdir)/check.o: check.c check.h
 	$(CC) $(CFLAGS) $< -c -o $@
 $(objdir)/linked_list.o: linked_list.c linked_list.h check.h
@@ -21,9 +21,13 @@ $(target): $(objects)
 	$(CC) $(CFLAGS) $^ -o $@ -lncurses
 
 
+.PHONY: directories
+directories:
+	mkdir -p $(bindir) $(objdir)
+
 .PHONY: clean
 clean:
-	-rm $(target) $(objects) 2>/dev/null
+	-rm -r $(bindir) 2>/dev/null
 	
 .PHONY: rebuild
 rebuild:
