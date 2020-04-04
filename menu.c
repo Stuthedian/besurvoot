@@ -25,10 +25,32 @@ void sig_winch(int signo)
     const int menu_item_width = COLS - menu_box_offset;
     main_menu.max_items_on_screen = LINES - menu_box_offset;
 
+    //wnd change size???
+    //free(main_menu.menu_wnd);
+    //wresize()
     /*main_menu.menu_wnd = newwin(LINES, COLS, menu_ncurses_y, menu_ncurses_x);
-    main_menu.menu_wnd CHECK_IS_NULL;
-    main_menu.items = malloc(main_menu.max_items_on_screen * sizeof(WINDOW*));
+    main_menu.menu_wnd CHECK_IS_NULL;*/
+    /*main_menu.items = malloc(main_menu.max_items_on_screen * sizeof(WINDOW*));
     main_menu.items CHECK_IS_NULL;*/
+    int num_items_on_screen_prev = main_menu.num_items_on_screen;
+    main_menu.num_items_on_screen = main_menu.max_items_on_screen > main_menu.text_list.count ? main_menu.text_list.count : main_menu.max_items_on_screen;
+
+    main_menu.items = realloc(main_menu.items, main_menu.num_items_on_screen * sizeof(WINDOW*));
+    main_menu.items CHECK_IS_NULL;
+    int diff = main_menu.num_items_on_screen - num_items_on_screen_prev;
+    int end_of_text_list_prev = main_menu.top_of_text_list + num_items_on_screen_prev;
+
+    if(diff > 0)
+    {
+        for (int i = num_items_on_screen_prev, j = end_of_text_list_prev; i < main_menu.num_items_on_screen; i++, j++)
+        {
+            main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
+                    i + menu_box_offset / 2,
+                    0 + menu_box_offset / 2);
+            main_menu.items[i] CHECK_IS_NULL;
+            wprintw(main_menu.items[i], list_find(main_menu.text_list, j)) CHECK_ERR;
+        }
+    }
     /*
      * store prev value
      * int temp = num_items_on_screen
@@ -39,11 +61,12 @@ void sig_winch(int signo)
      * compare (A)num_items_on_screen & (B)temp
      * int diff = A - B
      * if diff > 0 -> allocate new windows
+     *  populate each new window with text
      * else diff < 0 -> free unused windows
      *
      * */
 
-    if(terminal_height_change > 0)//pane enlarged
+    /*if(terminal_height_change > 0)//pane enlarged
     {
         int to_show = main_menu.text_list.count - 1 - main_menu.top_of_text_list + 1;
         if(main_menu.max_items_on_screen > to_show)
@@ -70,7 +93,7 @@ void sig_winch(int signo)
                 0 + menu_box_offset / 2);
         main_menu.items[i] CHECK_IS_NULL;
         wprintw(main_menu.items[i], list_find(main_menu.text_list, j)) CHECK_ERR;
-    }
+    }*/
     wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
     wbkgd(main_menu.items[main_menu.screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
 
