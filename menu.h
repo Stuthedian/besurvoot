@@ -15,22 +15,24 @@ typedef enum User_action
     UA_DOWN = 'j',
     UA_UP = 'k',
     UA_ENTER = '\r',
-    UA_NEW_ITEM = 'O',
+    UA_ADD_ITEM = 'O',
+    UA_DEL_ITEM = 'D',
 } User_action_e;
 
 typedef struct Menu
 {
-  WINDOW* menu_wnd;
-  WINDOW* input_wnd;
+    int height;
+    WINDOW* menu_wnd;
+    WINDOW* input_wnd;
 
-  Linked_list_t text_list;
-  int text_list_idx; // range 0 .. list.count - 1
-  int top_of_text_list; // range 0 .. list.count - 1
+    Linked_list_t text_list;
+    int text_list_idx; // range 0 .. list.count - 1
+    int top_of_text_list; // range 0 .. list.count - 1
 
-  WINDOW** items;
-  int num_items_on_screen; // min(max_items_on_screen, list.count)
-  int max_items_on_screen; // term_height - BOX_OFFSET
-  int screen_idx; // range 0 .. max_items_on_screen - 1
+    WINDOW** items;
+    int num_items_on_screen; // min(max_items_on_screen, list.count)
+    int max_items_on_screen; // term_height - BOX_OFFSET
+    int screen_idx; // range 0 .. max_items_on_screen - 1
 } Menu_t;
 
 void sig_winch(int signo);
