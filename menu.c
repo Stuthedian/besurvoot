@@ -9,6 +9,10 @@
 
 Menu_t main_menu;
 
+void fake_signal(int signo)
+{
+
+}
 void sig_winch(int signo)
 {
   struct winsize size;
@@ -24,13 +28,14 @@ void sig_winch(int signo)
   main_menu.height = size.ws_row;
   main_menu.max_items_on_screen = main_menu.height - menu_box_offset;
 
-  if(main_menu.max_items_on_screen <= 0)
-    return;
-
   if(terminal_height_change_abs != 0)
     wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
 
-  refresh() CHECK_ERR;
+  if(main_menu.max_items_on_screen <= 0)
+    return;
+
+
+  wclear(main_menu.menu_wnd) CHECK_ERR;
   wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
   box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
 
@@ -99,8 +104,6 @@ void sig_winch(int signo)
         if(main_menu.top_of_text_list < 0) //do not overjump
           main_menu.top_of_text_list = 0;
 
-        wbkgd(main_menu.items[main_menu.screen_idx],
-              COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
         main_menu.screen_idx += top_of_text_list_prev - main_menu.top_of_text_list;
       }
     }
@@ -115,11 +118,20 @@ void sig_winch(int signo)
     }
   }
 
+  clear() CHECK_ERR;
+  refresh() CHECK_ERR;
   wrefresh(main_menu.menu_wnd) CHECK_ERR;
+  //touchwin(main_menu.menu_wnd) CHECK_ERR;
+
 
   for(int i = 0, j = main_menu.top_of_text_list;
       i < main_menu.num_items_on_screen; i++, j++)
   {
+    delwin(main_menu.items[i]) CHECK_ERR;
+    main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
+                                i + menu_box_offset / 2,
+                                0 + menu_box_offset / 2);
+    main_menu.items[i] CHECK_IS_NULL;
     wbkgd(main_menu.items[i],
           COLOR_PAIR(1) | (i == main_menu.screen_idx ? A_REVERSE : A_NORMAL)) CHECK_ERR;
     wclear(main_menu.items[i]) CHECK_ERR;
@@ -127,14 +139,13 @@ void sig_winch(int signo)
     wrefresh(main_menu.items[i]) CHECK_ERR;
   }
 
-  wrefresh(main_menu.menu_wnd) CHECK_ERR;
 }
 
 void ncurses_init()
 {
   const struct sigaction sa_handler =
   {
-    .sa_handler = sig_winch
+    .sa_handler = fake_signal
   };
 
   initscr() CHECK_IS_NULL;
@@ -197,6 +208,8 @@ void menu_init(Menu_t* menu)
 
 
 
+  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+  box(menu->menu_wnd, '|', '-') CHECK_ERR;
 
   for(int i = 0; i < menu->num_items_on_screen; i++)
   {
@@ -207,10 +220,7 @@ void menu_init(Menu_t* menu)
     wprintw(menu->items[i], list_find(menu->text_list, i)) CHECK_ERR;
   }
 
-  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
   wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-
-  //box(menu->menu_wnd, '|', '-') CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
@@ -286,7 +296,7 @@ void menu_move(Menu_t* menu)
 {
   while(1)
   {
-    int ch = wgetch(menu->menu_wnd);
+    int ch = wgetch(menu->items[menu->screen_idx]);
 
     if(!(ch == UA_QUIT || ch == 'u') && menu->max_items_on_screen <= 0)
       continue;
