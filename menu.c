@@ -16,7 +16,8 @@ void fake_signal(int signo)
 void sig_winch(int signo)
 {
   struct winsize size;
-  ioctl(fileno(stdout), TIOCGWINSZ, (char*) &size) CHECK_IS_NEGATIVE_ONE;
+  ioctl(fileno(stdout), TIOCGWINSZ,
+        (char*) &size) CHECK_IS_NEGATIVE_ONE;
   const int terminal_height_change = size.ws_row - main_menu.height;
   resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
 
@@ -29,13 +30,16 @@ void sig_winch(int signo)
   if(terminal_height_change_abs != 0)
     wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
 
+  if(main_menu.max_items_on_screen < 0)
+    main_menu.max_items_on_screen = 0;
+
   if(main_menu.max_items_on_screen <= 0)
   {
     for(int i = 0; i < main_menu.height; i++)
       mvwhline(main_menu.menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
 
     wrefresh(main_menu.menu_wnd) CHECK_ERR;
-    return;
+    //return;
   }
 
 
@@ -60,7 +64,8 @@ void sig_winch(int signo)
                               main_menu.num_items_on_screen * sizeof(WINDOW*));
     main_menu.items CHECK_IS_NULL;
 
-    for(int i = num_items_on_screen_prev; i < main_menu.num_items_on_screen;
+    for(int i = num_items_on_screen_prev;
+        i < main_menu.num_items_on_screen;
         i++)
     {
       main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
@@ -81,17 +86,36 @@ void sig_winch(int signo)
 
     main_menu.items = realloc(main_menu.items,
                               main_menu.num_items_on_screen * sizeof(WINDOW*));
-    main_menu.items CHECK_IS_NULL;
+    //main_menu.items CHECK_IS_NULL;
   }
 
 
   if(terminal_height_change > 0)//pane enlarged
   {
     //num of items that are currently on screen plus items that "below" the screen
-    int to_show = main_menu.text_list.count - 1 - main_menu.top_of_text_list +
-                  1;
+    /*int to_show = main_menu.text_list.count - 1 -
+                  main_menu.top_of_text_list + 1;*/
+    int end_of = num_items_on_screen_prev +
+                 main_menu.top_of_text_list;
+    int num_below = main_menu.text_list.count - 1 - end_of;
 
-    if(main_menu.max_items_on_screen > to_show)
+    if(num_below < 0)
+      num_below = 0;
+
+    if(terminal_height_change_abs > num_below)
+    {
+
+      int top_of_text_list_prev = main_menu.top_of_text_list;
+      main_menu.top_of_text_list -= terminal_height_change_abs - num_below;
+
+      if(main_menu.top_of_text_list < 0) //do not overjump
+        main_menu.top_of_text_list = 0;
+
+      main_menu.screen_idx += top_of_text_list_prev -
+                              main_menu.top_of_text_list;
+    }
+
+    /*if(main_menu.max_items_on_screen > to_show)
     {
       //num of items that "below" the screen
       int num_below_screen = to_show -
@@ -107,9 +131,10 @@ void sig_winch(int signo)
         if(main_menu.top_of_text_list < 0) //do not overjump
           main_menu.top_of_text_list = 0;
 
-        main_menu.screen_idx += top_of_text_list_prev - main_menu.top_of_text_list;
+        main_menu.screen_idx += top_of_text_list_prev -
+                                main_menu.top_of_text_list;
       }
-    }
+    }*/
   }
   else if(terminal_height_change < 0)//pane shrank
   {
@@ -135,9 +160,11 @@ void sig_winch(int signo)
                                 0 + menu_box_offset / 2);
     main_menu.items[i] CHECK_IS_NULL;
     wbkgd(main_menu.items[i],
-          COLOR_PAIR(1) | (i == main_menu.screen_idx ? A_REVERSE : A_NORMAL)) CHECK_ERR;
+          COLOR_PAIR(1) | (i == main_menu.screen_idx ? A_REVERSE : A_NORMAL))
+    CHECK_ERR;
     wclear(main_menu.items[i]) CHECK_ERR;
-    wprintw(main_menu.items[i], list_find(main_menu.text_list, j)) CHECK_ERR;
+    wprintw(main_menu.items[i], list_find(main_menu.text_list,
+                                          j)) CHECK_ERR;
     wrefresh(main_menu.items[i]) CHECK_ERR;
   }
 
@@ -231,7 +258,8 @@ void menu_init(Menu_t* menu)
     wprintw(menu->items[i], list_find(menu->text_list, i)) CHECK_ERR;
   }
 
-  wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+  wbkgd(menu->items[menu->screen_idx],
+        COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
@@ -249,7 +277,8 @@ void menu_go_down(Menu_t* menu)
 {
   if(menu->text_list_idx + 1 < menu->text_list.count)
   {
-    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
+    wbkgd(menu->items[menu->screen_idx],
+          COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
     wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
     menu->screen_idx++;
     menu->text_list_idx++;
@@ -258,7 +287,8 @@ void menu_go_down(Menu_t* menu)
     {
       menu->top_of_text_list++;
 
-      for(int i = 0, j = menu->top_of_text_list; i < menu->num_items_on_screen;
+      for(int i = 0, j = menu->top_of_text_list;
+          i < menu->num_items_on_screen;
           i++, j++)
       {
         wclear(menu->items[i]) CHECK_ERR;
@@ -269,7 +299,8 @@ void menu_go_down(Menu_t* menu)
       menu->screen_idx--;
     }
 
-    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+    wbkgd(menu->items[menu->screen_idx],
+          COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
     wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
   }
 }
@@ -278,7 +309,8 @@ void menu_go_up(Menu_t* menu)
 {
   if(menu->text_list_idx - 1 >= 0)
   {
-    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
+    wbkgd(menu->items[menu->screen_idx],
+          COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
     wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
     menu->screen_idx--;
     menu->text_list_idx--;
@@ -287,7 +319,8 @@ void menu_go_up(Menu_t* menu)
     {
       menu->top_of_text_list--;
 
-      for(int i = 0, j = menu->top_of_text_list; i < menu->num_items_on_screen;
+      for(int i = 0, j = menu->top_of_text_list;
+          i < menu->num_items_on_screen;
           i++, j++)
       {
         wclear(menu->items[i]) CHECK_ERR;
@@ -298,7 +331,8 @@ void menu_go_up(Menu_t* menu)
       menu->screen_idx++;
     }
 
-    wbkgd(menu->items[menu->screen_idx], COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+    wbkgd(menu->items[menu->screen_idx],
+          COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
     wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
   }
 }
