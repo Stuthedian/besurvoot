@@ -39,13 +39,15 @@ void sig_winch(int signo)
       mvwhline(main_menu.menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
 
     wrefresh(main_menu.menu_wnd) CHECK_ERR;
-    //return;
+  }
+  else
+  {
+    wclear(main_menu.menu_wnd) CHECK_ERR;
+    wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+    box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
   }
 
 
-  wclear(main_menu.menu_wnd) CHECK_ERR;
-  wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-  box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
 
   int num_items_on_screen_prev = main_menu.num_items_on_screen;
   //minimum of available screen space and number of items
@@ -86,15 +88,11 @@ void sig_winch(int signo)
 
     main_menu.items = realloc(main_menu.items,
                               main_menu.num_items_on_screen * sizeof(WINDOW*));
-    //main_menu.items CHECK_IS_NULL;
   }
 
 
   if(terminal_height_change > 0)//pane enlarged
   {
-    //num of items that are currently on screen plus items that "below" the screen
-    /*int to_show = main_menu.text_list.count - 1 -
-                  main_menu.top_of_text_list + 1;*/
     int end_of = num_items_on_screen_prev +
                  main_menu.top_of_text_list;
     int num_below = main_menu.text_list.count - 1 - end_of;
@@ -114,27 +112,6 @@ void sig_winch(int signo)
       main_menu.screen_idx += top_of_text_list_prev -
                               main_menu.top_of_text_list;
     }
-
-    /*if(main_menu.max_items_on_screen > to_show)
-    {
-      //num of items that "below" the screen
-      int num_below_screen = to_show -
-                             num_items_on_screen_prev;
-      int num_above_screen_to_show = terminal_height_change_abs -
-                                     num_below_screen;
-
-      if(num_above_screen_to_show > 0) //show items that "above" the screen
-      {
-        int top_of_text_list_prev = main_menu.top_of_text_list;
-        main_menu.top_of_text_list -= num_above_screen_to_show;
-
-        if(main_menu.top_of_text_list < 0) //do not overjump
-          main_menu.top_of_text_list = 0;
-
-        main_menu.screen_idx += top_of_text_list_prev -
-                                main_menu.top_of_text_list;
-      }
-    }*/
   }
   else if(terminal_height_change < 0)//pane shrank
   {
@@ -146,8 +123,6 @@ void sig_winch(int signo)
     }
   }
 
-  clear() CHECK_ERR;
-  refresh() CHECK_ERR;
   wrefresh(main_menu.menu_wnd) CHECK_ERR;
 
 
@@ -405,9 +380,6 @@ void menu_add_item(Menu_t* menu)
   noecho() CHECK_ERR;
 
   delwin(menu->input_wnd) CHECK_ERR;
-
-  wrefresh(menu->menu_wnd) CHECK_ERR;
-
   list_add(&menu->text_list, user_input);
   free(user_input);
   sig_winch(0);
