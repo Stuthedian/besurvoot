@@ -22,8 +22,6 @@ void sig_winch(int signo)
 
   const int terminal_height_change_abs = abs(terminal_height_change);
   const int menu_box_offset = BOX_OFFSET;
-  const int menu_ncurses_y = 0;
-  const int menu_ncurses_x = 0;
   const int menu_item_width = COLS - menu_box_offset;
   main_menu.height = size.ws_row;
   main_menu.max_items_on_screen = main_menu.height - menu_box_offset;
@@ -47,8 +45,6 @@ void sig_winch(int signo)
 
   int num_items_on_screen_diff = main_menu.num_items_on_screen -
                                  num_items_on_screen_prev;
-  int end_of_text_list_prev = main_menu.top_of_text_list +
-                              num_items_on_screen_prev;
 
 
   if(num_items_on_screen_diff > 0)// allocate new windows
@@ -91,8 +87,9 @@ void sig_winch(int signo)
 
     if(main_menu.max_items_on_screen > to_show)
     {
+      //num of items that "below" the screen
       int num_below_screen = to_show -
-                             num_items_on_screen_prev; //num of items that "below" the screen
+                             num_items_on_screen_prev;
       int num_above_screen_to_show = terminal_height_change_abs -
                                      num_below_screen;
 
@@ -121,7 +118,6 @@ void sig_winch(int signo)
   clear() CHECK_ERR;
   refresh() CHECK_ERR;
   wrefresh(main_menu.menu_wnd) CHECK_ERR;
-  //touchwin(main_menu.menu_wnd) CHECK_ERR;
 
 
   for(int i = 0, j = main_menu.top_of_text_list;
@@ -200,7 +196,9 @@ void menu_init(Menu_t* menu)
                           menu_ncurses_x);
   menu->menu_wnd CHECK_IS_NULL;
 
-  if(main_menu.max_items_on_screen <= 0)
+  menu->items = NULL;
+
+  if(menu->max_items_on_screen <= 0)
     return;
 
   menu->items = malloc(menu->num_items_on_screen * sizeof(WINDOW*));
@@ -226,7 +224,7 @@ void menu_init(Menu_t* menu)
 
 void menu_destroy(Menu_t* menu)
 {
-  for(int i = 0, j = menu->top_of_text_list; i < menu->num_items_on_screen; i++)
+  for(int i = 0; i < menu->num_items_on_screen; i++)
     delwin(menu->items[i]) CHECK_ERR;
 
   list_free(&menu->text_list);
@@ -296,7 +294,7 @@ void menu_move(Menu_t* menu)
 {
   while(1)
   {
-    int ch = wgetch(menu->items[menu->screen_idx]);
+    int ch = getch();
 
     if(!(ch == UA_QUIT || ch == 'u') && menu->max_items_on_screen <= 0)
       continue;
@@ -343,20 +341,6 @@ void menu_move(Menu_t* menu)
 }*/
 void menu_add_item(Menu_t* menu)
 {
-  /*
-   * clear last line of screen, i. e. border of box
-   * use this line to hold user input
-   * all user keys interpreted as is until enter key is pressed
-   * after that:
-   * redraw box border
-   * add new entry to linked list
-   * set text_list_idx equal to new item
-   * redraw screen, screen_idx should highlight new item
-   * how to redraw screen: for example use function menu_go_down
-   * until text_list_idx reaches new item
-   *
-   * create input_wnd instead?
-   * */
   char* user_input = NULL;
   const int menu_item_width = COLS - BOX_OFFSET;
   user_input = malloc(menu_item_width * sizeof(char) + 1);
@@ -375,7 +359,6 @@ void menu_add_item(Menu_t* menu)
 
   delwin(menu->input_wnd) CHECK_ERR;
 
-  //box(menu->menu_wnd, '|', '-') CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
 
   list_add(&menu->text_list, user_input);
