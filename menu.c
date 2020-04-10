@@ -30,7 +30,13 @@ void sig_winch(int signo)
     wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
 
   if(main_menu.max_items_on_screen <= 0)
+  {
+    for(int i = 0; i < main_menu.height; i++)
+      mvwhline(main_menu.menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
+
+    wrefresh(main_menu.menu_wnd) CHECK_ERR;
     return;
+  }
 
 
   wclear(main_menu.menu_wnd) CHECK_ERR;
@@ -196,17 +202,24 @@ void menu_init(Menu_t* menu)
                           menu_ncurses_x);
   menu->menu_wnd CHECK_IS_NULL;
 
+  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+
   menu->items = NULL;
 
   if(menu->max_items_on_screen <= 0)
+  {
+    for(int i = 0; i < menu->height; i++)
+      mvwhline(menu->menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
+
+    wrefresh(menu->menu_wnd) CHECK_ERR;
     return;
+  }
 
   menu->items = malloc(menu->num_items_on_screen * sizeof(WINDOW*));
   menu->items CHECK_IS_NULL;
 
 
 
-  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
   box(menu->menu_wnd, '|', '-') CHECK_ERR;
 
   for(int i = 0; i < menu->num_items_on_screen; i++)
