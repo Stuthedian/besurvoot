@@ -396,6 +396,9 @@ void menu_add_item(Menu_t* menu)
   list_add(&menu->text_list, user_input);
   free(user_input);
   menu_resize();
+
+  while(menu->text_list_idx != menu->text_list.count - 1)
+    menu_go_down(menu);
 }
 
 void menu_act_on_item(Menu_t* menu)
