@@ -1,20 +1,20 @@
 #ifndef LINKED_LIST_H
-#define LINKED_LIST_H 
+#define LINKED_LIST_H
 
 #define STRING_WIDTH 80
 
 struct Linked_List_Node
 {
-	struct Linked_List_Node* prev;
-	struct Linked_List_Node* next;
-    char text[STRING_WIDTH];
+  struct Linked_List_Node* prev;
+  struct Linked_List_Node* next;
+  char text[STRING_WIDTH];
 };
 
 typedef struct Linked_List
 {
-	struct Linked_List_Node* first;
-	struct Linked_List_Node* last;
-    int count;
+  struct Linked_List_Node* first;
+  struct Linked_List_Node* last;
+  int count;
 } Linked_list_t;
 
 void list_add(Linked_list_t* ll_list, char* str);

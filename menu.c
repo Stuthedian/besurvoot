@@ -198,6 +198,31 @@ void ncurses_destroy()
   endwin() CHECK_ERR;
 }
 
+char* remove_newline(char* string)
+{
+  int i = strlen(string);
+
+  if(string[i - 1] == '\n')
+    string[i - 1] = '\0';
+
+  return string;
+}
+
+void fill_list_from_file(Linked_list_t* list)
+{
+  char temp_str[STRING_WIDTH];
+  FILE* file = fopen(BESURVOOT_FILENAME, "a+");
+  file CHECK_IS_NULL;
+
+  while(TRUE)
+  {
+    if(fgets(temp_str, STRING_WIDTH, file) == NULL)
+      break;
+
+    list_add(list, remove_newline(temp_str));
+  }
+}
+
 void menu_init(Menu_t* menu)
 {
   const int menu_box_offset = BOX_OFFSET;
@@ -210,11 +235,12 @@ void menu_init(Menu_t* menu)
   menu->text_list_idx = 0;
   menu->top_of_text_list = 0;
 
-  list_add(&menu->text_list,  "show firmware");
+  /*list_add(&menu->text_list,  "show firmware");
   list_add(&menu->text_list,  "reload system");
   list_add(&menu->text_list,  "show running config");
   list_add(&menu->text_list,  "show msdp vrf test peers");
-  list_add(&menu->text_list,  "Exit");
+  list_add(&menu->text_list,  "Exit");*/
+  fill_list_from_file(&menu->text_list);
 
   menu->num_items_on_screen = menu->max_items_on_screen >
                               menu->text_list.count ?

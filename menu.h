@@ -8,6 +8,7 @@
 #define CHECK_ERR CHECK(==, ERR);
 
 #define BOX_OFFSET 2
+#define BESURVOOT_FILENAME ".besurvoot_commands"
 
 typedef enum User_action
 {
@@ -38,6 +39,9 @@ typedef struct Menu
 
 
 int get_height();
+void fill_list_from_file(Linked_list_t* list);
+char* remove_newline(char* string);
+
 void ncurses_init();
 void ncurses_destroy();
 void menu_init(Menu_t* menu);
