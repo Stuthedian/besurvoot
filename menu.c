@@ -9,18 +9,22 @@
 
 Menu_t main_menu;
 
-void fake_signal(int signo)
+bool menu_should_resize(Menu_t* menu)
 {
+  struct winsize size;
+  ioctl(fileno(stdout), TIOCGWINSZ,
+        (char*) &size) CHECK_IS_NEGATIVE_ONE;
+  const int terminal_height_change = size.ws_row - menu->height;
 
+  return terminal_height_change != 0;
 }
-void sig_winch(int signo)
+
+void menu_resize()
 {
   struct winsize size;
   ioctl(fileno(stdout), TIOCGWINSZ,
         (char*) &size) CHECK_IS_NEGATIVE_ONE;
   const int terminal_height_change = size.ws_row - main_menu.height;
-  resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
-
   const int terminal_height_change_abs = abs(terminal_height_change);
   const int menu_box_offset = BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
@@ -28,7 +32,10 @@ void sig_winch(int signo)
   main_menu.max_items_on_screen = main_menu.height - menu_box_offset;
 
   if(terminal_height_change_abs != 0)
+  {
+    resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
     wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
+  }
 
   if(main_menu.max_items_on_screen < 0)
     main_menu.max_items_on_screen = 0;
@@ -73,7 +80,16 @@ void sig_winch(int signo)
       main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
                                   i + menu_box_offset / 2,
                                   0 + menu_box_offset / 2);
-      main_menu.items[i] CHECK_IS_NULL;
+
+      if(main_menu.items[i] == NULL)
+      {
+        if(menu_should_resize(&main_menu))
+        {
+          menu_resize();
+          return;
+        }
+        else main_menu.items[i] CHECK_IS_NULL;
+      }
     }
   }
   else if(num_items_on_screen_diff < 0)// deallocate unused windows
@@ -88,6 +104,9 @@ void sig_winch(int signo)
 
     main_menu.items = realloc(main_menu.items,
                               main_menu.num_items_on_screen * sizeof(WINDOW*));
+
+    if(main_menu.num_items_on_screen != 0)
+      main_menu.items CHECK_IS_NULL;
   }
 
 
@@ -133,7 +152,17 @@ void sig_winch(int signo)
     main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
                                 i + menu_box_offset / 2,
                                 0 + menu_box_offset / 2);
-    main_menu.items[i] CHECK_IS_NULL;
+
+    if(main_menu.items[i] == NULL)
+    {
+      if(menu_should_resize(&main_menu))
+      {
+        menu_resize();
+        return;
+      }
+      else main_menu.items[i] CHECK_IS_NULL;
+    }
+
     wbkgd(main_menu.items[i],
           COLOR_PAIR(1) | (i == main_menu.screen_idx ? A_REVERSE : A_NORMAL))
     CHECK_ERR;
@@ -142,15 +171,14 @@ void sig_winch(int signo)
                                           j)) CHECK_ERR;
     wrefresh(main_menu.items[i]) CHECK_ERR;
   }
-
 }
 
 void ncurses_init()
 {
-  const struct sigaction sa_handler =
+  /*const struct sigaction sa_handler =
   {
     .sa_handler = fake_signal
-  };
+  };*/
 
   initscr() CHECK_IS_NULL;
   cbreak() CHECK_ERR;
@@ -168,7 +196,8 @@ void ncurses_init()
   intrflush(stdscr, FALSE) CHECK_ERR;
   keypad(stdscr, TRUE) CHECK_ERR;
 
-  nodelay(stdscr, 1) CHECK_ERR;
+  halfdelay(5) CHECK_ERR;//test
+  //nodelay(stdscr, 1) CHECK_ERR;
 
   refresh() CHECK_ERR;
 }
@@ -316,10 +345,18 @@ void menu_move(Menu_t* menu)
 {
   while(1)
   {
-    int ch = getch();
+    int ch = wgetch(menu->menu_wnd);
 
-    if(!(ch == UA_QUIT || ch == 'u') && menu->max_items_on_screen <= 0)
-      continue;
+    struct winsize size;
+    ioctl(fileno(stdout), TIOCGWINSZ,
+          (char*) &size) CHECK_IS_NEGATIVE_ONE;
+    const int terminal_height_change = size.ws_row - main_menu.height;
+
+    if(terminal_height_change != 0)
+      menu_resize();
+
+    /*if(!(ch == UA_QUIT || ch == 'u') && menu->max_items_on_screen <= 0)
+      continue;*/
 
     switch(ch)
     {
@@ -341,8 +378,8 @@ void menu_move(Menu_t* menu)
       menu_add_item(menu);
       break;
 
-    case 'u':
-      sig_winch(0);
+      //case 'u':
+      //sig_winch(0);
       break;
 
     /*case UA_DEL_ITEM:
@@ -382,7 +419,7 @@ void menu_add_item(Menu_t* menu)
   delwin(menu->input_wnd) CHECK_ERR;
   list_add(&menu->text_list, user_input);
   free(user_input);
-  sig_winch(0);
+  menu_resize();
 }
 
 void menu_act_on_item(Menu_t* menu)

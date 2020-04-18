@@ -35,7 +35,6 @@ typedef struct Menu
   int screen_idx; // range 0 .. max_items_on_screen - 1
 } Menu_t;
 
-void sig_winch(int signo);
 
 void ncurses_init();
 void ncurses_destroy();
