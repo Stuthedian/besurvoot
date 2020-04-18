@@ -99,7 +99,10 @@ void menu_resize()
         i >= main_menu.num_items_on_screen;
         i--)
     {
-      delwin(main_menu.items[i]) CHECK_ERR;
+      /* if item is NULL it means that we fail to derwin it in previous
+         call to menu_resize() because we were unaware that pane height
+         was changed */
+      delwin(main_menu.items[i]);//CHECK_ERR;
     }
 
     main_menu.items = realloc(main_menu.items,
