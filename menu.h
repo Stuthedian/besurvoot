@@ -27,12 +27,13 @@ typedef struct Menu
 
   Linked_list_t text_list;
   int text_list_idx; // range 0 .. list.count - 1
-  int top_of_text_list; // range 0 .. list.count - 1
+  //also: text_list_idx == top_of_text_list + screen_idx
+  int top_of_text_list; // minimum value = 0
 
   WINDOW** items;
   int num_items_on_screen; // min(max_items_on_screen, list.count)
   int max_items_on_screen; // term_height - BOX_OFFSET, min == 1
-  int screen_idx; // range 0 .. max_items_on_screen - 1
+  int screen_idx; // maximum value = max_items_on_screen - 1
 } Menu_t;
 
 
@@ -47,6 +48,7 @@ void menu_move(Menu_t* menu);
 
 void menu_add_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);
+bool menu_should_resize(Menu_t* menu);
 
 void menu_do_routine();
 
