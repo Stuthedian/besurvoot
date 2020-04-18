@@ -37,6 +37,7 @@ typedef struct Menu
 } Menu_t;
 
 
+int get_height();
 void ncurses_init();
 void ncurses_destroy();
 void menu_init(Menu_t* menu);
@@ -48,7 +49,7 @@ void menu_move(Menu_t* menu);
 
 void menu_add_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);
-bool menu_should_resize(Menu_t* menu);
+bool menu_should_resize(const int menu_height);
 
 void menu_do_routine();
 

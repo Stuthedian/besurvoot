@@ -9,31 +9,32 @@
 
 Menu_t main_menu;
 
-bool menu_should_resize(Menu_t* menu)
+int get_height()
 {
   struct winsize size;
   ioctl(fileno(stdout), TIOCGWINSZ,
         (char*) &size) CHECK_IS_NEGATIVE_ONE;
-  const int terminal_height_change = size.ws_row - menu->height;
+  return size.ws_row;
+}
 
-  return terminal_height_change != 0;
+bool menu_should_resize(const int menu_height)
+{
+  return (get_height() - menu_height) != 0;
 }
 
 void menu_resize()
 {
-  struct winsize size;
-  ioctl(fileno(stdout), TIOCGWINSZ,
-        (char*) &size) CHECK_IS_NEGATIVE_ONE;
-  const int terminal_height_change = size.ws_row - main_menu.height;
+  const int term_height = get_height();
+  const int terminal_height_change = term_height - main_menu.height;
   const int terminal_height_change_abs = abs(terminal_height_change);
   const int menu_box_offset = BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
-  main_menu.height = size.ws_row;
+  main_menu.height = term_height;
   main_menu.max_items_on_screen = main_menu.height - menu_box_offset;
 
   if(terminal_height_change_abs != 0)
   {
-    resizeterm(size.ws_row, size.ws_col) CHECK_ERR;
+    resizeterm(term_height, COLS) CHECK_ERR;
     wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
   }
 
@@ -83,7 +84,7 @@ void menu_resize()
 
       if(main_menu.items[i] == NULL)
       {
-        if(menu_should_resize(&main_menu))
+        if(menu_should_resize(main_menu.height))
         {
           menu_resize();
           return;
@@ -158,7 +159,7 @@ void menu_resize()
 
     if(main_menu.items[i] == NULL)
     {
-      if(menu_should_resize(&main_menu))
+      if(menu_should_resize(main_menu.height))
       {
         menu_resize();
         return;
@@ -178,16 +179,9 @@ void menu_resize()
 
 void ncurses_init()
 {
-  /*const struct sigaction sa_handler =
-  {
-    .sa_handler = fake_signal
-  };*/
-
   initscr() CHECK_IS_NULL;
   cbreak() CHECK_ERR;
   noecho() CHECK_ERR;
-
-  //sigaction(SIGWINCH, &sa_handler, NULL) CHECK_IS_NEGATIVE_ONE;
 
   curs_set(FALSE) CHECK_ERR;
 
@@ -199,8 +193,7 @@ void ncurses_init()
   intrflush(stdscr, FALSE) CHECK_ERR;
   keypad(stdscr, TRUE) CHECK_ERR;
 
-  halfdelay(5) CHECK_ERR;//test
-  //nodelay(stdscr, 1) CHECK_ERR;
+  halfdelay(5) CHECK_ERR;
 
   refresh() CHECK_ERR;
 }
@@ -251,8 +244,6 @@ void menu_init(Menu_t* menu)
 
   menu->items = malloc(menu->num_items_on_screen * sizeof(WINDOW*));
   menu->items CHECK_IS_NULL;
-
-
 
   box(menu->menu_wnd, '|', '-') CHECK_ERR;
 
@@ -350,16 +341,8 @@ void menu_move(Menu_t* menu)
   {
     int ch = wgetch(menu->menu_wnd);
 
-    struct winsize size;
-    ioctl(fileno(stdout), TIOCGWINSZ,
-          (char*) &size) CHECK_IS_NEGATIVE_ONE;
-    const int terminal_height_change = size.ws_row - main_menu.height;
-
-    if(terminal_height_change != 0)
+    if(menu_should_resize(menu->height))
       menu_resize();
-
-    /*if(!(ch == UA_QUIT || ch == 'u') && menu->max_items_on_screen <= 0)
-      continue;*/
 
     switch(ch)
     {
@@ -379,10 +362,6 @@ void menu_move(Menu_t* menu)
 
     case UA_ADD_ITEM:
       menu_add_item(menu);
-      break;
-
-      //case 'u':
-      //sig_winch(0);
       break;
 
     /*case UA_DEL_ITEM:
