@@ -45,8 +45,6 @@ void menu_resize()
   {
     for(int i = 0; i < main_menu.height; i++)
       mvwhline(main_menu.menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
-
-    wrefresh(main_menu.menu_wnd) CHECK_ERR;
   }
   else
   {
@@ -55,9 +53,8 @@ void menu_resize()
     box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
   }
 
-
-
   int num_items_on_screen_prev = main_menu.num_items_on_screen;
+
   //minimum of available screen space and number of items
   main_menu.num_items_on_screen = main_menu.max_items_on_screen >
                                   main_menu.text_list.count ? main_menu.text_list.count :
@@ -65,7 +62,6 @@ void menu_resize()
 
   int num_items_on_screen_diff = main_menu.num_items_on_screen -
                                  num_items_on_screen_prev;
-
 
   if(num_items_on_screen_diff > 0)// allocate new windows
   {
@@ -146,9 +142,6 @@ void menu_resize()
     }
   }
 
-  wrefresh(main_menu.menu_wnd) CHECK_ERR;
-
-
   for(int i = 0, j = main_menu.top_of_text_list;
       i < main_menu.num_items_on_screen; i++, j++)
   {
@@ -173,8 +166,10 @@ void menu_resize()
     wclear(main_menu.items[i]) CHECK_ERR;
     wprintw(main_menu.items[i], list_find(main_menu.text_list,
                                           j)) CHECK_ERR;
-    wrefresh(main_menu.items[i]) CHECK_ERR;
   }
+
+  touchwin(main_menu.menu_wnd) CHECK_ERR;
+  wrefresh(main_menu.menu_wnd) CHECK_ERR;
 }
 
 void ncurses_init()
@@ -258,6 +253,7 @@ void menu_init(Menu_t* menu)
 
   wbkgd(menu->items[menu->screen_idx],
         COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+  touchwin(main_menu.menu_wnd) CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
