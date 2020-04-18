@@ -110,7 +110,8 @@ void menu_resize()
   }
 
 
-  if(terminal_height_change > 0)//pane enlarged
+  //pane enlarged
+  if(terminal_height_change > 0 && main_menu.num_items_on_screen != 0)
   {
     int end_of = num_items_on_screen_prev +
                  main_menu.top_of_text_list;
@@ -132,7 +133,9 @@ void menu_resize()
                               main_menu.top_of_text_list;
     }
   }
-  else if(terminal_height_change < 0)//pane shrank
+  //pane shrank
+  else if(terminal_height_change < 0
+          && main_menu.num_items_on_screen != 0)
   {
     if(main_menu.screen_idx >= main_menu.max_items_on_screen)
     {
@@ -240,7 +243,15 @@ void menu_init(Menu_t* menu)
   list_add(&menu->text_list,  "show running config");
   list_add(&menu->text_list,  "show msdp vrf test peers");
   list_add(&menu->text_list,  "Exit");*/
+  menu->text_list.count = 0;
   fill_list_from_file(&menu->text_list);
+
+  if(menu->text_list.count == 0)
+  {
+    menu->screen_idx = -1;
+    menu->text_list_idx = -1;
+    menu->top_of_text_list = -1;
+  }
 
   menu->num_items_on_screen = menu->max_items_on_screen >
                               menu->text_list.count ?
@@ -277,8 +288,10 @@ void menu_init(Menu_t* menu)
     wprintw(menu->items[i], list_find(menu->text_list, i)) CHECK_ERR;
   }
 
-  wbkgd(menu->items[menu->screen_idx],
-        COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+  if(menu->num_items_on_screen != 0)
+    wbkgd(menu->items[menu->screen_idx],
+          COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
+
   touchwin(main_menu.menu_wnd) CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
 }
@@ -421,6 +434,11 @@ void menu_add_item(Menu_t* menu)
   delwin(menu->input_wnd) CHECK_ERR;
   list_add(&menu->text_list, user_input);
   free(user_input);
+
+  menu->screen_idx = 0;
+  menu->text_list_idx = 0;
+  menu->top_of_text_list = 0;
+
   menu_resize();
 
   while(menu->text_list_idx != menu->text_list.count - 1)
@@ -431,8 +449,11 @@ void menu_act_on_item(Menu_t* menu)
 {
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
-  char* command = list_find(menu->text_list, menu->text_list_idx);
   char* suffix = "\" Enter";
+  char* command = list_find(menu->text_list, menu->text_list_idx);
+
+  if(command == NULL)
+    return;
 
   result_command = malloc(strlen(prefix) + strlen(command) + strlen(
                             suffix) + 1);
