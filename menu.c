@@ -277,7 +277,6 @@ void menu_go_down(Menu_t* menu)
   {
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
-    wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
     menu->screen_idx++;
     menu->text_list_idx++;
 
@@ -291,7 +290,6 @@ void menu_go_down(Menu_t* menu)
       {
         wclear(menu->items[i]) CHECK_ERR;
         wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
-        wrefresh(menu->items[i]) CHECK_ERR;
       }
 
       menu->screen_idx--;
@@ -299,7 +297,8 @@ void menu_go_down(Menu_t* menu)
 
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-    wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
+    touchwin(menu->menu_wnd) CHECK_ERR;
+    wrefresh(menu->menu_wnd) CHECK_ERR;
   }
 }
 
@@ -309,7 +308,6 @@ void menu_go_up(Menu_t* menu)
   {
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
-    wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
     menu->screen_idx--;
     menu->text_list_idx--;
 
@@ -323,7 +321,6 @@ void menu_go_up(Menu_t* menu)
       {
         wclear(menu->items[i]) CHECK_ERR;
         wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
-        wrefresh(menu->items[i]) CHECK_ERR;
       }
 
       menu->screen_idx++;
@@ -331,7 +328,8 @@ void menu_go_up(Menu_t* menu)
 
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-    wrefresh(menu->items[menu->screen_idx]) CHECK_ERR;
+    touchwin(menu->menu_wnd) CHECK_ERR;
+    wrefresh(menu->menu_wnd) CHECK_ERR;
   }
 }
 
