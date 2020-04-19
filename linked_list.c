@@ -43,10 +43,10 @@ void list_free(struct Linked_List* ll_list)
   ll_list->last = NULL;
 }
 
-char* list_find(const Linked_list_t ll_list, int index)
+char* list_find(const Linked_list_t* ll_list, int index)
 {
   char* result_str = NULL;
-  struct Linked_List_Node* node = ll_list.first;
+  struct Linked_List_Node* node = ll_list->first;
 
   if(index < 0)
     goto EXIT;

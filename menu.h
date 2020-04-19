@@ -40,6 +40,7 @@ typedef struct Menu
 
 int get_height();
 void fill_list_from_file(Linked_list_t* list);
+void fill_file_from_list(const Linked_list_t* list);
 char* remove_newline(char* string);
 
 void ncurses_init();

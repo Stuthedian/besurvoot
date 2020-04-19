@@ -19,7 +19,7 @@ typedef struct Linked_List
 
 void list_add(Linked_list_t* ll_list, char* str);
 void list_free(Linked_list_t* ll_list);
-char* list_find(const Linked_list_t ll_list, int index);
+char* list_find(const Linked_list_t* ll_list, int index);
 //list_swap(ll_list, idx or node_ptr, bool: prev or next)
 
 #endif //LINKED_LIST_H 

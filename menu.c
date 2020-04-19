@@ -168,7 +168,7 @@ void menu_resize()
           COLOR_PAIR(1) | (i == main_menu.screen_idx ? A_REVERSE : A_NORMAL))
     CHECK_ERR;
     wclear(main_menu.items[i]) CHECK_ERR;
-    wprintw(main_menu.items[i], list_find(main_menu.text_list,
+    wprintw(main_menu.items[i], list_find(&main_menu.text_list,
                                           j)) CHECK_ERR;
   }
 
@@ -225,6 +225,22 @@ void fill_list_from_file(Linked_list_t* list)
 
     list_add(list, remove_newline(temp_str));
   }
+
+  fclose(file) CHECK( ==, EOF);
+}
+
+void fill_file_from_list(const Linked_list_t* list)
+{
+  FILE* file = fopen(BESURVOOT_FILENAME, "w");
+  file CHECK_IS_NULL;
+
+  for(int i = 0; i < list->count; i++)
+  {
+    fputs(list_find(list, i), file) CHECK( ==, EOF);
+    fputc('\n', file) CHECK( ==, EOF);
+  }
+
+  fclose(file) CHECK( ==, EOF);
 }
 
 void menu_init(Menu_t* menu)
@@ -286,7 +302,7 @@ void menu_init(Menu_t* menu)
                             i + menu_box_offset / 2,
                             0 + menu_box_offset / 2);
     menu->items[i] CHECK_IS_NULL;
-    wprintw(menu->items[i], list_find(menu->text_list, i)) CHECK_ERR;
+    wprintw(menu->items[i], list_find(&menu->text_list, i)) CHECK_ERR;
   }
 
   if(menu->num_items_on_screen != 0)
@@ -325,7 +341,7 @@ void menu_go_down(Menu_t* menu)
           i++, j++)
       {
         wclear(menu->items[i]) CHECK_ERR;
-        wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
+        wprintw(menu->items[i], list_find(&menu->text_list, j)) CHECK_ERR;
       }
 
       menu->screen_idx--;
@@ -356,7 +372,7 @@ void menu_go_up(Menu_t* menu)
           i++, j++)
       {
         wclear(menu->items[i]) CHECK_ERR;
-        wprintw(menu->items[i], list_find(menu->text_list, j)) CHECK_ERR;
+        wprintw(menu->items[i], list_find(&menu->text_list, j)) CHECK_ERR;
       }
 
       menu->screen_idx++;
@@ -451,7 +467,7 @@ void menu_act_on_item(Menu_t* menu)
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
   char* suffix = "\" Enter";
-  char* command = list_find(menu->text_list, menu->text_list_idx);
+  char* command = list_find(&menu->text_list, menu->text_list_idx);
 
   if(command == NULL)
     return;
@@ -474,5 +490,6 @@ void menu_do_routine()
 {
   menu_init(&main_menu);
   menu_move(&main_menu);
+  fill_file_from_list(&main_menu.text_list);
   menu_destroy(&main_menu);
 }
