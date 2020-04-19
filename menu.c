@@ -22,7 +22,7 @@ bool menu_should_resize(const int menu_height)
   return (get_height() - menu_height) != 0;
 }
 
-void menu_resize()
+void menu_resize(Menu_t* menu)
 {
   const int term_height = get_height();
   const int terminal_height_change = term_height - main_menu.height;
@@ -82,7 +82,7 @@ void menu_resize()
       {
         if(menu_should_resize(main_menu.height))
         {
-          menu_resize();
+          menu_resize(menu);
           return;
         }
         else main_menu.items[i] CHECK_IS_NULL;
@@ -158,7 +158,7 @@ void menu_resize()
     {
       if(menu_should_resize(main_menu.height))
       {
-        menu_resize();
+        menu_resize(menu);
         return;
       }
       else main_menu.items[i] CHECK_IS_NULL;
@@ -392,7 +392,7 @@ void menu_move(Menu_t* menu)
     int ch = wgetch(menu->menu_wnd);
 
     if(menu_should_resize(menu->height))
-      menu_resize();
+      menu_resize(menu);
 
     switch(ch)
     {
@@ -456,7 +456,7 @@ void menu_add_item(Menu_t* menu)
   menu->text_list_idx = 0;
   menu->top_of_text_list = 0;
 
-  menu_resize();
+  menu_resize(menu);
 
   while(menu->text_list_idx != menu->text_list.count - 1)
     menu_go_down(menu);
