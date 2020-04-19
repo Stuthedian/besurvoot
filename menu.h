@@ -26,7 +26,7 @@ typedef struct Menu
   WINDOW* menu_wnd;
   WINDOW* input_wnd;
 
-  Linked_list_t text_list;
+  Linked_List_t text_list;
   int text_list_idx; // range 0 .. list.count - 1
   //also: text_list_idx == top_of_text_list + screen_idx
   int top_of_text_list; // minimum value = 0
@@ -39,8 +39,8 @@ typedef struct Menu
 
 
 int get_height();
-void fill_list_from_file(Linked_list_t* list);
-void fill_file_from_list(const Linked_list_t* list);
+void fill_list_from_file(Linked_List_t* list);
+void fill_file_from_list(const Linked_List_t* list);
 char* remove_newline(char* string);
 
 void ncurses_init();

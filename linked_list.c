@@ -2,7 +2,14 @@
 #include "check.h"
 #include "linked_list.h"
 
-void list_add(struct Linked_List* ll_list, char* str)
+void list_init(Linked_List_t* ll_list)
+{
+  ll_list->first = NULL;
+  ll_list->last = NULL;
+  ll_list->count = 0;
+}
+
+void list_add(Linked_List_t* ll_list, char* str)
 {
   struct Linked_List_Node* ll_node = malloc(sizeof(
                                        struct Linked_List_Node));
@@ -27,7 +34,7 @@ void list_add(struct Linked_List* ll_list, char* str)
   ll_list->count++;
 }
 
-void list_free(struct Linked_List* ll_list)
+void list_destroy(Linked_List_t* ll_list)
 {
   struct Linked_List_Node* next_to_free = NULL;
 
@@ -38,12 +45,12 @@ void list_free(struct Linked_List* ll_list)
     ll_list->last = next_to_free;
   }
 
-  ll_list->count = -1;
+  ll_list->count = 0;
   ll_list->first = NULL;
   ll_list->last = NULL;
 }
 
-char* list_find(const Linked_list_t* ll_list, int index)
+char* list_find(const Linked_List_t* ll_list, int index)
 {
   char* result_str = NULL;
   struct Linked_List_Node* node = ll_list->first;

@@ -7,7 +7,6 @@
 #include <sys/ioctl.h>
 #include "menu.h"
 
-Menu_t main_menu;
 
 int get_height()
 {
@@ -212,7 +211,7 @@ char* remove_newline(char* string)
   return string;
 }
 
-void fill_list_from_file(Linked_list_t* list)
+void fill_list_from_file(Linked_List_t* list)
 {
   char temp_str[STRING_WIDTH];
   FILE* file = fopen(BESURVOOT_FILENAME, "a+");
@@ -229,7 +228,7 @@ void fill_list_from_file(Linked_list_t* list)
   fclose(file) CHECK( ==, EOF);
 }
 
-void fill_file_from_list(const Linked_list_t* list)
+void fill_file_from_list(const Linked_List_t* list)
 {
   FILE* file = fopen(BESURVOOT_FILENAME, "w");
   file CHECK_IS_NULL;
@@ -260,7 +259,7 @@ void menu_init(Menu_t* menu)
   list_add(&menu->text_list,  "show running config");
   list_add(&menu->text_list,  "show msdp vrf test peers");
   list_add(&menu->text_list,  "Exit");*/
-  menu->text_list.count = 0;
+  list_init(&menu->text_list);
   fill_list_from_file(&menu->text_list);
 
   if(menu->text_list.count == 0)
@@ -318,7 +317,7 @@ void menu_destroy(Menu_t* menu)
   for(int i = 0; i < menu->num_items_on_screen; i++)
     delwin(menu->items[i]) CHECK_ERR;
 
-  list_free(&menu->text_list);
+  list_destroy(&menu->text_list);
   free(menu->items);
   delwin(menu->menu_wnd) CHECK_ERR;
 }
@@ -488,6 +487,8 @@ void menu_act_on_item(Menu_t* menu)
 
 void menu_do_routine()
 {
+  Menu_t main_menu;
+
   menu_init(&main_menu);
   menu_move(&main_menu);
   fill_file_from_list(&main_menu.text_list);
