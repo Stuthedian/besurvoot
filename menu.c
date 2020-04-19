@@ -309,7 +309,7 @@ void menu_init(Menu_t* menu)
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
 
-  touchwin(main_menu.menu_wnd) CHECK_ERR;
+  touchwin(menu->menu_wnd) CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
