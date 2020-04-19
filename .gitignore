@@ -1,4 +1,5 @@
 bin
 .astylerc
 *.swp
+g
 .besurvoot_commands

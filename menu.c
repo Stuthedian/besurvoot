@@ -110,38 +110,39 @@ void menu_resize()
   }
 
 
-  //pane enlarged
-  if(terminal_height_change > 0 && main_menu.num_items_on_screen != 0)
+  if(main_menu.text_list.count != 0)
   {
-    int end_of = num_items_on_screen_prev +
-                 main_menu.top_of_text_list;
-    int num_below = main_menu.text_list.count - 1 - end_of;
-
-    if(num_below < 0)
-      num_below = 0;
-
-    if(terminal_height_change_abs > num_below)
+    //pane enlarged
+    if(terminal_height_change > 0)
     {
+      int end_of = num_items_on_screen_prev +
+                   main_menu.top_of_text_list;
+      int num_below = main_menu.text_list.count - 1 - end_of;
 
-      int top_of_text_list_prev = main_menu.top_of_text_list;
-      main_menu.top_of_text_list -= terminal_height_change_abs - num_below;
+      if(num_below < 0)
+        num_below = 0;
 
-      if(main_menu.top_of_text_list < 0) //do not overjump
-        main_menu.top_of_text_list = 0;
+      if(terminal_height_change_abs > num_below)
+      {
 
-      main_menu.screen_idx += top_of_text_list_prev -
-                              main_menu.top_of_text_list;
+        int top_of_text_list_prev = main_menu.top_of_text_list;
+        main_menu.top_of_text_list -= terminal_height_change_abs - num_below;
+
+        if(main_menu.top_of_text_list < 0) //do not overjump
+          main_menu.top_of_text_list = 0;
+
+        main_menu.screen_idx += top_of_text_list_prev -
+                                main_menu.top_of_text_list;
+      }
     }
-  }
-  //pane shrank
-  else if(terminal_height_change < 0
-          && main_menu.num_items_on_screen != 0)
-  {
-    if(main_menu.screen_idx >= main_menu.max_items_on_screen)
+    else if(terminal_height_change < 0)//pane shrank
     {
-      int screen_idx_prev = main_menu.screen_idx;
-      main_menu.screen_idx = main_menu.max_items_on_screen - 1;
-      main_menu.top_of_text_list += screen_idx_prev - main_menu.screen_idx;
+      if(main_menu.screen_idx >= main_menu.max_items_on_screen)
+      {
+        int screen_idx_prev = main_menu.screen_idx;
+        main_menu.screen_idx = main_menu.max_items_on_screen - 1;
+        main_menu.top_of_text_list += screen_idx_prev - main_menu.screen_idx;
+      }
     }
   }
 
