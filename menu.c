@@ -25,67 +25,67 @@ bool menu_should_resize(const int menu_height)
 void menu_resize(Menu_t* menu)
 {
   const int term_height = get_height();
-  const int terminal_height_change = term_height - main_menu.height;
+  const int terminal_height_change = term_height - menu->height;
   const int terminal_height_change_abs = abs(terminal_height_change);
   const int menu_box_offset = BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
-  main_menu.height = term_height;
-  main_menu.max_items_on_screen = main_menu.height - menu_box_offset;
+  menu->height = term_height;
+  menu->max_items_on_screen = menu->height - menu_box_offset;
 
   if(terminal_height_change_abs != 0)
   {
     resizeterm(term_height, COLS) CHECK_ERR;
-    wresize(main_menu.menu_wnd, main_menu.height, COLS) CHECK_ERR;
+    wresize(menu->menu_wnd, menu->height, COLS) CHECK_ERR;
   }
 
-  if(main_menu.max_items_on_screen < 0)
-    main_menu.max_items_on_screen = 0;
+  if(menu->max_items_on_screen < 0)
+    menu->max_items_on_screen = 0;
 
-  if(main_menu.max_items_on_screen <= 0)
+  if(menu->max_items_on_screen <= 0)
   {
-    for(int i = 0; i < main_menu.height; i++)
-      mvwhline(main_menu.menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
+    for(int i = 0; i < menu->height; i++)
+      mvwhline(menu->menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
   }
   else
   {
-    wclear(main_menu.menu_wnd) CHECK_ERR;
-    wbkgd(main_menu.menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-    box(main_menu.menu_wnd, '|', '-') CHECK_ERR;
+    wclear(menu->menu_wnd) CHECK_ERR;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+    box(menu->menu_wnd, '|', '-') CHECK_ERR;
   }
 
-  int num_items_on_screen_prev = main_menu.num_items_on_screen;
+  int num_items_on_screen_prev = menu->num_items_on_screen;
 
   //minimum of available screen space and number of items
-  main_menu.num_items_on_screen = main_menu.max_items_on_screen >
-                                  main_menu.text_list.count ? main_menu.text_list.count :
-                                  main_menu.max_items_on_screen;
+  menu->num_items_on_screen = menu->max_items_on_screen >
+                              menu->text_list.count ? menu->text_list.count :
+                              menu->max_items_on_screen;
 
-  int num_items_on_screen_diff = main_menu.num_items_on_screen -
+  int num_items_on_screen_diff = menu->num_items_on_screen -
                                  num_items_on_screen_prev;
 
   if(num_items_on_screen_diff > 0)// allocate new windows
   {
     //realloc before allocating new windows as we need some place to store pointers
-    main_menu.items = realloc(main_menu.items,
-                              main_menu.num_items_on_screen * sizeof(WINDOW*));
-    main_menu.items CHECK_IS_NULL;
+    menu->items = realloc(menu->items,
+                          menu->num_items_on_screen * sizeof(WINDOW*));
+    menu->items CHECK_IS_NULL;
 
     for(int i = num_items_on_screen_prev;
-        i < main_menu.num_items_on_screen;
+        i < menu->num_items_on_screen;
         i++)
     {
-      main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
-                                  i + menu_box_offset / 2,
-                                  0 + menu_box_offset / 2);
+      menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
+                              i + menu_box_offset / 2,
+                              0 + menu_box_offset / 2);
 
-      if(main_menu.items[i] == NULL)
+      if(menu->items[i] == NULL)
       {
-        if(menu_should_resize(main_menu.height))
+        if(menu_should_resize(menu->height))
         {
           menu_resize(menu);
           return;
         }
-        else main_menu.items[i] CHECK_IS_NULL;
+        else menu->items[i] CHECK_IS_NULL;
       }
     }
   }
@@ -93,31 +93,31 @@ void menu_resize(Menu_t* menu)
   {
     //realloc after deallocation as we need not to loose pointers to windows
     for(int i = num_items_on_screen_prev - 1;
-        i >= main_menu.num_items_on_screen;
+        i >= menu->num_items_on_screen;
         i--)
     {
       /* if item is NULL it means that we fail to derwin it in previous
          call to menu_resize() because we were unaware that pane height
          was changed */
-      delwin(main_menu.items[i]);//CHECK_ERR;
+      delwin(menu->items[i]);//CHECK_ERR;
     }
 
-    main_menu.items = realloc(main_menu.items,
-                              main_menu.num_items_on_screen * sizeof(WINDOW*));
+    menu->items = realloc(menu->items,
+                          menu->num_items_on_screen * sizeof(WINDOW*));
 
-    if(main_menu.num_items_on_screen != 0)
-      main_menu.items CHECK_IS_NULL;
+    if(menu->num_items_on_screen != 0)
+      menu->items CHECK_IS_NULL;
   }
 
 
-  if(main_menu.text_list.count != 0)
+  if(menu->text_list.count != 0)
   {
     //pane enlarged
     if(terminal_height_change > 0)
     {
       int end_of = num_items_on_screen_prev +
-                   main_menu.top_of_text_list;
-      int num_below = main_menu.text_list.count - 1 - end_of;
+                   menu->top_of_text_list;
+      int num_below = menu->text_list.count - 1 - end_of;
 
       if(num_below < 0)
         num_below = 0;
@@ -125,55 +125,55 @@ void menu_resize(Menu_t* menu)
       if(terminal_height_change_abs > num_below)
       {
 
-        int top_of_text_list_prev = main_menu.top_of_text_list;
-        main_menu.top_of_text_list -= terminal_height_change_abs - num_below;
+        int top_of_text_list_prev = menu->top_of_text_list;
+        menu->top_of_text_list -= terminal_height_change_abs - num_below;
 
-        if(main_menu.top_of_text_list < 0) //do not overjump
-          main_menu.top_of_text_list = 0;
+        if(menu->top_of_text_list < 0) //do not overjump
+          menu->top_of_text_list = 0;
 
-        main_menu.screen_idx += top_of_text_list_prev -
-                                main_menu.top_of_text_list;
+        menu->screen_idx += top_of_text_list_prev -
+                            menu->top_of_text_list;
       }
     }
     else if(terminal_height_change < 0)//pane shrank
     {
-      if(main_menu.screen_idx >= main_menu.max_items_on_screen)
+      if(menu->screen_idx >= menu->max_items_on_screen)
       {
-        int screen_idx_prev = main_menu.screen_idx;
-        main_menu.screen_idx = main_menu.max_items_on_screen - 1;
-        main_menu.top_of_text_list += screen_idx_prev - main_menu.screen_idx;
+        int screen_idx_prev = menu->screen_idx;
+        menu->screen_idx = menu->max_items_on_screen - 1;
+        menu->top_of_text_list += screen_idx_prev - menu->screen_idx;
       }
     }
   }
 
-  for(int i = 0, j = main_menu.top_of_text_list;
-      i < main_menu.num_items_on_screen; i++, j++)
+  for(int i = 0, j = menu->top_of_text_list;
+      i < menu->num_items_on_screen; i++, j++)
   {
-    delwin(main_menu.items[i]) CHECK_ERR;
-    main_menu.items[i] = derwin(main_menu.menu_wnd, 1, menu_item_width,
-                                i + menu_box_offset / 2,
-                                0 + menu_box_offset / 2);
+    delwin(menu->items[i]) CHECK_ERR;
+    menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
+                            i + menu_box_offset / 2,
+                            0 + menu_box_offset / 2);
 
-    if(main_menu.items[i] == NULL)
+    if(menu->items[i] == NULL)
     {
-      if(menu_should_resize(main_menu.height))
+      if(menu_should_resize(menu->height))
       {
         menu_resize(menu);
         return;
       }
-      else main_menu.items[i] CHECK_IS_NULL;
+      else menu->items[i] CHECK_IS_NULL;
     }
 
-    wbkgd(main_menu.items[i],
-          COLOR_PAIR(1) | (i == main_menu.screen_idx ? A_REVERSE : A_NORMAL))
+    wbkgd(menu->items[i],
+          COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     CHECK_ERR;
-    wclear(main_menu.items[i]) CHECK_ERR;
-    wprintw(main_menu.items[i], list_find(&main_menu.text_list,
-                                          j)) CHECK_ERR;
+    wclear(menu->items[i]) CHECK_ERR;
+    wprintw(menu->items[i], list_find(&menu->text_list,
+                                      j)) CHECK_ERR;
   }
 
-  touchwin(main_menu.menu_wnd) CHECK_ERR;
-  wrefresh(main_menu.menu_wnd) CHECK_ERR;
+  touchwin(menu->menu_wnd) CHECK_ERR;
+  wrefresh(menu->menu_wnd) CHECK_ERR;
 }
 
 void ncurses_init()
