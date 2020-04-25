@@ -30,7 +30,7 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
 
   if(menu->height == 1 || menu->height == 2)
   {
-    assert(num_items_on_screen_prev == 0);
+    assert(num_items_on_screen_prev == 0);//??
   }
 
   //realloc before allocating new windows as we need some place to store pointers
@@ -60,8 +60,8 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
   }
 
   int end_of = num_items_on_screen_prev +
-               menu->top_of_text_list;
-  int num_below = menu->text_list.count - 1 - end_of;
+               menu->top_of_text_list;//1
+  int num_below = menu->text_list.count - 1 - end_of;//3
 
   if(num_below < 0)
     num_below = 0;
@@ -83,7 +83,8 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
          menu->screen_idx);
 }
 
-void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
+void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev,
+                 const int terminal_height_change_abs)
 {
 
   //realloc after deallocation as we need not to loose pointers to windows
@@ -103,6 +104,18 @@ void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
 
   if(menu->num_items_on_screen != 0)
     menu->items CHECK_IS_NULL;
+
+  if(menu->screen_idx >= menu->max_items_on_screen)
+  {
+    int screen_idx_prev = menu->screen_idx;
+    //menu->screen_idx = menu->max_items_on_screen - 1; 0 -1
+    //menu->top_of_text_list += screen_idx_prev - menu->screen_idx; 0 1
+    menu->screen_idx -= terminal_height_change_abs;
+    menu->top_of_text_list += terminal_height_change_abs;
+  }
+
+  assert(menu->text_list_idx == menu->top_of_text_list +
+         menu->screen_idx);
 }
 
 void menu_repaint(Menu_t* menu)
@@ -186,7 +199,8 @@ void menu_resize(Menu_t* menu)
     }
     else if(num_items_on_screen_diff < 0)
     {
-      menu_shrink(menu, num_items_on_screen_prev);
+      menu_shrink(menu, num_items_on_screen_prev,
+                  terminal_height_change_abs);
     }
 
     menu_repaint(menu);
