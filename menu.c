@@ -22,7 +22,8 @@ bool menu_should_resize(const int menu_height)
   return (get_height() - menu_height) != 0;
 }
 
-void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
+void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
+                  const int terminal_height_change_abs)
 {
   const int menu_box_offset = BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
@@ -57,6 +58,51 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
       else menu->items[i] CHECK_IS_NULL;
     }*/
   }
+
+  int end_of = num_items_on_screen_prev +
+               menu->top_of_text_list;
+  int num_below = menu->text_list.count - 1 - end_of;
+
+  if(num_below < 0)
+    num_below = 0;
+
+  if(terminal_height_change_abs > num_below)
+  {
+
+    int top_of_text_list_prev = menu->top_of_text_list;
+    menu->top_of_text_list -= terminal_height_change_abs - num_below;
+
+    if(menu->top_of_text_list < 0) //do not overjump
+      menu->top_of_text_list = 0;
+
+    menu->screen_idx += top_of_text_list_prev -
+                        menu->top_of_text_list;
+  }
+
+  assert(menu->text_list_idx == menu->top_of_text_list +
+         menu->screen_idx);
+}
+
+void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
+{
+
+  //realloc after deallocation as we need not to loose pointers to windows
+  for(int i = num_items_on_screen_prev - 1;
+      i >= menu->num_items_on_screen;
+      i--)
+  {
+
+    /* if item is NULL it means that we fail to derwin it in previous
+    call to menu_resize() because we were unaware that pane height
+      was changed*/
+    delwin(menu->items[i]);//CHECK_ERR;
+  }
+
+  menu->items = realloc(menu->items,
+                        menu->num_items_on_screen * sizeof(WINDOW*));
+
+  if(menu->num_items_on_screen != 0)
+    menu->items CHECK_IS_NULL;
 }
 
 void menu_repaint(Menu_t* menu)
@@ -135,11 +181,12 @@ void menu_resize(Menu_t* menu)
   {
     if(num_items_on_screen_diff > 0)
     {
-      menu_enlarge(menu, num_items_on_screen_prev);
+      menu_enlarge(menu, num_items_on_screen_prev,
+                   terminal_height_change_abs);
     }
     else if(num_items_on_screen_diff < 0)
     {
-      //menu_shrank(menu);
+      menu_shrink(menu, num_items_on_screen_prev);
     }
 
     menu_repaint(menu);
