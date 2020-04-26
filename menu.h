@@ -23,19 +23,17 @@ typedef enum User_action
 typedef struct Menu
 {
   int height;
-  int height_prev;
   WINDOW* menu_wnd;
   WINDOW* input_wnd;
 
   Linked_List_t text_list;
-  int text_list_idx; // range 0 .. list.count - 1
-  //also: text_list_idx == top_of_text_list + screen_idx
-  int top_of_text_list; // minimum value = 0
+  int text_list_idx;
+  int top_of_text_list;
 
   WINDOW** items;
   int num_items_on_screen; // min(max_items_on_screen, list.count)
   int max_items_on_screen; // term_height - BOX_OFFSET, min == 0
-  int screen_idx; // maximum value = max_items_on_screen - 1
+  int screen_idx;
 } Menu_t;
 
 

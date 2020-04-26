@@ -116,10 +116,7 @@ void menu_resize(Menu_t* menu)
     box(menu->menu_wnd, '|', '-') CHECK_ERR;
   }
 
-  menu->height_prev = menu->height;
-  menu->height = term_height;
   menu->max_items_on_screen = menu->height - menu_box_offset;
-  //assert(top_of_text_list >= 0)
   assert(menu->max_items_on_screen >= 0);
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
@@ -146,14 +143,14 @@ void menu_resize(Menu_t* menu)
   if(menu->text_list.count != 0)
   {
     if(num_items_on_screen_diff > 0)
-    {
       menu_enlarge(menu, num_items_on_screen_prev);
-    }
     else if(num_items_on_screen_diff < 0)
-    {
       menu_shrink(menu, num_items_on_screen_prev);
-    }
 
+    assert(menu->text_list_idx >= 0
+           && menu->text_list_idx < menu->text_list.count);
+    assert(menu->screen_idx >= 0
+           && menu->screen_idx < menu->max_items_on_screen);
     assert(menu->top_of_text_list >= 0
            && menu->top_of_text_list < menu->text_list.count);
     assert(menu->screen_idx >= 0
@@ -244,7 +241,6 @@ void menu_init(Menu_t* menu)
   const int menu_ncurses_x = 0;
   const int menu_item_width = COLS - menu_box_offset;
   menu->height = LINES;
-  menu->height_prev = menu->height;
   menu->max_items_on_screen = menu->height - menu_box_offset;
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
@@ -286,7 +282,6 @@ void menu_init(Menu_t* menu)
 
     wrefresh(menu->menu_wnd) CHECK_ERR;
     menu->height = 0;
-    menu->height_prev = menu->height;
     return;
   }
 
