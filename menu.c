@@ -62,7 +62,7 @@ void menu_repaint_items(Menu_t* menu)
   for(int i = 0, j = menu->top_of_text_list;
       i < menu->num_items_on_screen; i++, j++)
   {
-    delwin(menu->items[i]) CHECK_ERR;
+    //delwin(menu->items[i]) CHECK_ERR;
     menu->items[i] = derwin(menu->menu_wnd, 1, BOX_OFFSET - 2,
                             i +  BOX_OFFSET / 2,
                             0 + BOX_OFFSET  / 2);
@@ -121,7 +121,6 @@ void menu_resize(Menu_t* menu)
   menu->max_items_on_screen = menu->height - menu_box_offset;
   //assert(top_of_text_list >= 0)
   assert(menu->max_items_on_screen >= 0);
-  assert(menu->num_items_on_screen >= 0);
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
 
@@ -133,9 +132,14 @@ void menu_resize(Menu_t* menu)
   menu->num_items_on_screen = menu->max_items_on_screen >
                               menu->text_list.count ? menu->text_list.count :
                               menu->max_items_on_screen;
+  assert(menu->num_items_on_screen >= 0);
 
   const int num_items_on_screen_diff = menu->num_items_on_screen -
                                        num_items_on_screen_prev;
+
+  for(int i = 0; i < num_items_on_screen_prev; i++)
+    delwin(menu->items[i]) CHECK_ERR;
+
   menu->items = realloc(menu->items,
                         menu->num_items_on_screen * sizeof(WINDOW*));
 
