@@ -22,38 +22,31 @@ bool menu_should_resize(const int menu_height)
   return get_height() != menu_height;
 }
 
-void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
-                  const int terminal_height_change_abs)
+void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
 {
-  int num_of_items_hide = menu->text_list.count -
-                          num_items_on_screen_prev;
+  int num_of_hidden_items = menu->text_list.count -
+                            num_items_on_screen_prev;
 
-  if(num_of_items_hide > 0)
+  if(num_of_hidden_items > 0)
   {
-    int num_above_screen = menu->top_of_text_list;
+    int num_above_screen = menu->top_of_text_list;//Redundant?
     int num_below_screen = menu->text_list.count - (menu->top_of_text_list
                            + num_items_on_screen_prev);
     assert(num_below_screen >= 0);
-    int diff = menu->num_items_on_screen - num_items_on_screen_prev -
-               num_below_screen;
+    assert(num_below_screen + num_above_screen == num_of_hidden_items);
+    int num_above_screen_can_show = menu->num_items_on_screen -
+                                    num_items_on_screen_prev -
+                                    num_below_screen;
 
-    if(diff > 0)
+    if(num_above_screen_can_show > 0)
     {
-      menu->screen_idx += diff;
-      menu->top_of_text_list -= diff;
+      menu->screen_idx += num_above_screen_can_show;
+      menu->top_of_text_list -= num_above_screen_can_show;
     }
   }
-
-  assert(menu->top_of_text_list >= 0
-         && menu->top_of_text_list < menu->text_list.count);
-  assert(menu->screen_idx >= 0
-         && menu->screen_idx < menu->num_items_on_screen);
-  assert(menu->text_list_idx == menu->top_of_text_list +
-         menu->screen_idx);
 }
 
-void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev,
-                 const int terminal_height_change_abs)
+void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
 {
   int ddd = num_items_on_screen_prev - menu->num_items_on_screen;
 
@@ -62,13 +55,6 @@ void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev,
     menu->screen_idx -= ddd;
     menu->top_of_text_list += ddd;
   }
-
-  assert(menu->top_of_text_list >= 0
-         && menu->top_of_text_list < menu->text_list.count);
-  assert(menu->screen_idx >= 0
-         && menu->screen_idx < menu->num_items_on_screen);
-  assert(menu->text_list_idx == menu->top_of_text_list +
-         menu->screen_idx);
 }
 
 void menu_repaint_items(Menu_t* menu)
@@ -153,19 +139,23 @@ void menu_resize(Menu_t* menu)
   menu->items = realloc(menu->items,
                         menu->num_items_on_screen * sizeof(WINDOW*));
 
-  //Edge case
   if(menu->text_list.count != 0)
   {
     if(num_items_on_screen_diff > 0)
     {
-      menu_enlarge(menu, num_items_on_screen_prev,
-                   terminal_height_change_abs);
+      menu_enlarge(menu, num_items_on_screen_prev);
     }
     else if(num_items_on_screen_diff < 0)
     {
-      menu_shrink(menu, num_items_on_screen_prev,
-                  terminal_height_change_abs);
+      menu_shrink(menu, num_items_on_screen_prev);
     }
+
+    assert(menu->top_of_text_list >= 0
+           && menu->top_of_text_list < menu->text_list.count);
+    assert(menu->screen_idx >= 0
+           && menu->screen_idx < menu->num_items_on_screen);
+    assert(menu->text_list_idx == menu->top_of_text_list +
+           menu->screen_idx);
 
     if(menu_should_resize(menu->height))
     {
