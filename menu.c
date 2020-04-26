@@ -25,61 +25,6 @@ bool menu_should_resize(const int menu_height)
 void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
                   const int terminal_height_change_abs)
 {
-  const int menu_box_offset = BOX_OFFSET;
-  const int menu_item_width = COLS - menu_box_offset;
-
-  /*if(menu->height == 1 || menu->height == 2)
-  {
-    assert(num_items_on_screen_prev == 0);//??
-  }*/
-
-  //realloc before allocating new windows as we need some place to store pointers
-  menu->items = realloc(menu->items,
-                        menu->num_items_on_screen * sizeof(WINDOW*));
-
-  menu->items CHECK_IS_NULL;
-
-  assert(num_items_on_screen_prev >= 0);
-
-  for(int i = num_items_on_screen_prev;
-      i < menu->num_items_on_screen;
-      i++)
-  {
-    menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
-                            i + menu_box_offset / 2,
-                            0 + menu_box_offset / 2);
-
-    //Edge case
-    /*if(menu->items[i] == NULL)
-    {
-      if(menu_should_resize(menu->height))
-      {
-        menu_resize(menu);
-        return;
-      }
-      else menu->items[i] CHECK_IS_NULL;
-    }*/
-  }
-
-  /*int end_of = num_items_on_screen_prev +
-               menu->top_of_text_list;//1
-  int num_below = menu->text_list.count - 1 - end_of;//3
-
-  if(num_below < 0)
-    num_below = 0;
-
-  if(terminal_height_change_abs > num_below)
-  {
-
-    int top_of_text_list_prev = menu->top_of_text_list;
-    menu->top_of_text_list -= terminal_height_change_abs - num_below;
-
-    if(menu->top_of_text_list < 0) //do not overjump
-      menu->top_of_text_list = 0;
-
-    menu->screen_idx += top_of_text_list_prev -
-                        menu->top_of_text_list;
-  }*/
   int num_of_items_hide = menu->text_list.count -
                           num_items_on_screen_prev;
 
@@ -91,7 +36,6 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
     assert(num_below_screen >= 0);
     int diff = menu->num_items_on_screen - num_items_on_screen_prev -
                num_below_screen;
-    //int above_to_show = num_above_screen - num_below_screen;
 
     if(diff > 0)
     {
@@ -111,32 +55,10 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev,
 void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev,
                  const int terminal_height_change_abs)
 {
-
-  //realloc after deallocation as we need not to loose pointers to windows
-  for(int i = num_items_on_screen_prev - 1;
-      i >= menu->num_items_on_screen;
-      i--)
-  {
-
-    /* if item is NULL it means that we fail to derwin it in previous
-    call to menu_resize() because we were unaware that pane height
-      was changed*/
-    delwin(menu->items[i]);//CHECK_ERR;
-  }
-
-  menu->items = realloc(menu->items,
-                        menu->num_items_on_screen * sizeof(WINDOW*));
-
-  if(menu->num_items_on_screen != 0)
-    menu->items CHECK_IS_NULL;
-
   int ddd = num_items_on_screen_prev - menu->num_items_on_screen;
 
   if(menu->screen_idx >= menu->max_items_on_screen)
   {
-    //int screen_idx_prev = menu->screen_idx;
-    //menu->screen_idx = menu->max_items_on_screen - 1; 0 -1
-    //menu->top_of_text_list += screen_idx_prev - menu->screen_idx; 0 1
     menu->screen_idx -= ddd;
     menu->top_of_text_list += ddd;
   }
@@ -154,20 +76,20 @@ void menu_repaint_items(Menu_t* menu)
   for(int i = 0, j = menu->top_of_text_list;
       i < menu->num_items_on_screen; i++, j++)
   {
-    /*delwin(menu->items[i]) CHECK_ERR;
-    menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
-                            i + menu_box_offset / 2,
-                            0 + menu_box_offset / 2);
-
-    if(menu->items[i] == NULL)
-    {
-      if(menu_should_resize(menu->height))
-      {
-        menu_resize(menu);
-        return;
-      }
-      else menu->items[i] CHECK_IS_NULL;
-    }*/
+    delwin(menu->items[i]) CHECK_ERR;
+    menu->items[i] = derwin(menu->menu_wnd, 1, BOX_OFFSET - 2,
+                            i +  BOX_OFFSET / 2,
+                            0 + BOX_OFFSET  / 2);
+    /*
+        if(menu->items[i] == NULL)
+        {
+          if(menu_should_resize(menu->height))
+          {
+            menu_resize(menu);
+            return;
+          }
+          else menu->items[i] CHECK_IS_NULL;
+        }*/
 
     wbkgd(menu->items[i],
           COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
@@ -228,6 +150,8 @@ void menu_resize(Menu_t* menu)
 
   const int num_items_on_screen_diff = menu->num_items_on_screen -
                                        num_items_on_screen_prev;
+  menu->items = realloc(menu->items,
+                        menu->num_items_on_screen * sizeof(WINDOW*));
 
   //Edge case
   if(menu->text_list.count != 0)
@@ -250,147 +174,6 @@ void menu_resize(Menu_t* menu)
     }
     else menu_repaint_items(menu);
   }
-
-
-  /*const int term_height = get_height();
-  const int terminal_height_change = term_height - menu->height;
-  const int terminal_height_change_abs = abs(terminal_height_change);
-  const int menu_box_offset = BOX_OFFSET;
-  const int menu_item_width = COLS - menu_box_offset;
-  menu->height = term_height;
-  menu->max_items_on_screen = menu->height - menu_box_offset;
-
-  if(terminal_height_change_abs != 0)
-  {
-    resizeterm(term_height, COLS) CHECK_ERR;
-    wresize(menu->menu_wnd, menu->height, COLS) CHECK_ERR;
-  }
-
-  if(menu->max_items_on_screen < 0)
-    menu->max_items_on_screen = 0;
-
-
-  int num_items_on_screen_prev = menu->num_items_on_screen;
-
-  //minimum of available screen space and number of items
-  menu->num_items_on_screen = menu->max_items_on_screen >
-                              menu->text_list.count ? menu->text_list.count :
-                              menu->max_items_on_screen;
-
-  int num_items_on_screen_diff = menu->num_items_on_screen -
-                                 num_items_on_screen_prev;
-
-  if(num_items_on_screen_diff > 0)// allocate new windows
-  {
-    //realloc before allocating new windows as we need some place to store pointers
-    menu->items = realloc(menu->items,
-                          menu->num_items_on_screen * sizeof(WINDOW*));
-    menu->items CHECK_IS_NULL;
-
-    for(int i = num_items_on_screen_prev;
-        i < menu->num_items_on_screen;
-        i++)
-    {
-      menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
-                              i + menu_box_offset / 2,
-                              0 + menu_box_offset / 2);
-
-      if(menu->items[i] == NULL)
-      {
-        if(menu_should_resize(menu->height))
-        {
-          menu_resize(menu);
-          return;
-        }
-        else menu->items[i] CHECK_IS_NULL;
-      }
-    }
-  }
-  else if(num_items_on_screen_diff < 0)// deallocate unused windows
-  {
-    //realloc after deallocation as we need not to loose pointers to windows
-    for(int i = num_items_on_screen_prev - 1;
-        i >= menu->num_items_on_screen;
-        i--)
-    {
-      * if item is NULL it means that we fail to derwin it in previous
-         call to menu_resize() because we were unaware that pane height
-         was changed *
-      delwin(menu->items[i]);//CHECK_ERR;
-    }
-
-    menu->items = realloc(menu->items,
-                          menu->num_items_on_screen * sizeof(WINDOW*));
-
-    if(menu->num_items_on_screen != 0)
-      menu->items CHECK_IS_NULL;
-  }
-
-
-  if(menu->text_list.count != 0)
-  {
-    //pane enlarged
-    if(terminal_height_change > 0)
-    {
-      int end_of = num_items_on_screen_prev +
-                   menu->top_of_text_list;
-      int num_below = menu->text_list.count - 1 - end_of;
-
-      if(num_below < 0)
-        num_below = 0;
-
-      if(terminal_height_change_abs > num_below)
-      {
-
-        int top_of_text_list_prev = menu->top_of_text_list;
-        menu->top_of_text_list -= terminal_height_change_abs - num_below;
-
-        if(menu->top_of_text_list < 0) //do not overjump
-          menu->top_of_text_list = 0;
-
-        menu->screen_idx += top_of_text_list_prev -
-                            menu->top_of_text_list;
-      }
-    }
-    else if(terminal_height_change < 0)//pane shrank
-    {
-      if(menu->screen_idx >= menu->max_items_on_screen)
-      {
-        int screen_idx_prev = menu->screen_idx;
-        menu->screen_idx = menu->max_items_on_screen - 1;
-        menu->top_of_text_list += screen_idx_prev - menu->screen_idx;
-      }
-    }
-  }
-
-  for(int i = 0, j = menu->top_of_text_list;
-      i < menu->num_items_on_screen; i++, j++)
-  {
-    delwin(menu->items[i]) CHECK_ERR;
-    menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
-                            i + menu_box_offset / 2,
-                            0 + menu_box_offset / 2);
-
-    if(menu->items[i] == NULL)
-    {
-      if(menu_should_resize(menu->height))
-      {
-        menu_resize(menu);
-        return;
-      }
-      else menu->items[i] CHECK_IS_NULL;
-    }
-
-    wbkgd(menu->items[i],
-          COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
-    CHECK_ERR;
-    wclear(menu->items[i]) CHECK_ERR;
-    wprintw(menu->items[i], list_find(&menu->text_list,
-                                      j)) CHECK_ERR;
-  }
-
-  touchwin(menu->menu_wnd) CHECK_ERR;
-  wrefresh(menu->menu_wnd) CHECK_ERR;*/
 }
 
 void ncurses_init()
