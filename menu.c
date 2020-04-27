@@ -9,6 +9,22 @@
 #include "menu.h"
 
 
+void assert_conditions(Menu_t* menu)
+{
+  assert(menu->max_items_on_screen >= 0);
+  assert(menu->num_items_on_screen >= 0);
+  assert(menu->text_list_idx >= 0
+         && menu->text_list_idx < menu->text_list.count);
+  assert(menu->screen_idx >= 0
+         && menu->screen_idx < menu->max_items_on_screen);
+  assert(menu->top_of_text_list >= 0
+         && menu->top_of_text_list < menu->text_list.count);
+  assert(menu->screen_idx >= 0
+         && menu->screen_idx < menu->num_items_on_screen);
+  assert(menu->text_list_idx == menu->top_of_text_list +
+         menu->screen_idx);
+}
+
 int get_height()
 {
   struct winsize size;
@@ -143,16 +159,7 @@ void menu_resize(Menu_t* menu)
     else if(num_items_on_screen_diff < 0)
       menu_shrink(menu, num_items_on_screen_prev);
 
-    assert(menu->text_list_idx >= 0
-           && menu->text_list_idx < menu->text_list.count);
-    assert(menu->screen_idx >= 0
-           && menu->screen_idx < menu->max_items_on_screen);
-    assert(menu->top_of_text_list >= 0
-           && menu->top_of_text_list < menu->text_list.count);
-    assert(menu->screen_idx >= 0
-           && menu->screen_idx < menu->num_items_on_screen);
-    assert(menu->text_list_idx == menu->top_of_text_list +
-           menu->screen_idx);
+    assert_conditions(menu);
 
     if(menu_should_resize(menu->height))
     {
@@ -337,6 +344,8 @@ void menu_go_down(Menu_t* menu)
       menu->screen_idx--;
     }
 
+    assert_conditions(menu);
+
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
     touchwin(menu->menu_wnd) CHECK_ERR;
@@ -367,6 +376,8 @@ void menu_go_up(Menu_t* menu)
 
       menu->screen_idx++;
     }
+
+    assert_conditions(menu);
 
     wbkgd(menu->items[menu->screen_idx],
           COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
@@ -446,6 +457,7 @@ void menu_add_item(Menu_t* menu)
   list_add(&menu->text_list, user_input);
   free(user_input);
 
+  //???
   menu->screen_idx = 0;
   menu->text_list_idx = 0;
   menu->top_of_text_list = 0;
