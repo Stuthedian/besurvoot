@@ -49,7 +49,7 @@ void menu_destroy(Menu_t* menu);
 
 void menu_go_up(Menu_t* menu);
 void menu_go_down(Menu_t* menu);
-void menu_move(Menu_t* menu);
+void menu_wait_for_user_input(Menu_t* menu);
 
 void menu_add_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);

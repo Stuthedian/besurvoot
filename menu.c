@@ -93,10 +93,10 @@ void menu_repaint_items(Menu_t* menu)
 void menu_resize(Menu_t* menu)
 {
   const int term_height = get_height();
-  const int terminal_height_change = term_height - menu->height;
-  const int terminal_height_change_abs = abs(terminal_height_change);
+  /*const int terminal_height_change = term_height - menu->height;
+  const int terminal_height_change_abs = abs(terminal_height_change);*/
   const int menu_box_offset = BOX_OFFSET;
-  assert(terminal_height_change_abs != 0);
+  //assert(terminal_height_change_abs != 0);
   resizeterm(term_height, COLS) CHECK_ERR;
   wresize(menu->menu_wnd, term_height, COLS) CHECK_ERR;
 
@@ -118,13 +118,11 @@ void menu_resize(Menu_t* menu)
 
   menu->max_items_on_screen = menu->height - menu_box_offset;
   assert(menu->max_items_on_screen >= 0);
-  menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
-                              menu->max_items_on_screen;
+  menu->max_items_on_screen = menu->max_items_on_screen;
 
 
-  const int num_items_on_screen_prev = menu->num_items_on_screen < 0 ?
-                                       0 :
-                                       menu->num_items_on_screen;
+  const int num_items_on_screen_prev = menu->num_items_on_screen;
+
   //minimum of available screen space and number of items
   menu->num_items_on_screen = menu->max_items_on_screen >
                               menu->text_list.count ? menu->text_list.count :
@@ -379,7 +377,7 @@ void menu_go_up(Menu_t* menu)
   }
 }
 
-void menu_move(Menu_t* menu)
+void menu_wait_for_user_input(Menu_t* menu)
 {
   while(1)
   {
@@ -387,6 +385,10 @@ void menu_move(Menu_t* menu)
 
     if(menu_should_resize(menu->height))
       menu_resize(menu);
+
+    if(menu->height == 1 || menu->height == 2)
+      if(ch != UA_QUIT)
+        ch = ERR;
 
     switch(ch)
     {
@@ -485,7 +487,7 @@ void menu_do_routine()
   Menu_t main_menu;
 
   menu_init(&main_menu);
-  menu_move(&main_menu);
+  menu_wait_for_user_input(&main_menu);
   fill_file_from_list(&main_menu.text_list);
   menu_destroy(&main_menu);
 }
