@@ -93,10 +93,8 @@ void menu_repaint_items(Menu_t* menu)
 void menu_resize(Menu_t* menu)
 {
   const int term_height = get_height();
-  /*const int terminal_height_change = term_height - menu->height;
-  const int terminal_height_change_abs = abs(terminal_height_change);*/
   const int menu_box_offset = BOX_OFFSET;
-  //assert(terminal_height_change_abs != 0);
+
   resizeterm(term_height, COLS) CHECK_ERR;
   wresize(menu->menu_wnd, term_height, COLS) CHECK_ERR;
 
