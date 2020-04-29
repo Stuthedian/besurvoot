@@ -92,7 +92,7 @@ void menu_repaint_items(Menu_t* menu)
     CHECK_ERR;
     wclear(menu->items[i]) CHECK_ERR;
     wprintw(menu->items[i], "%.*s", menu_item_width - 1,
-            list_find(&menu->text_list, i)) CHECK_ERR;
+            list_find(&menu->text_list, j)) CHECK_ERR;
   }
 
 
@@ -240,7 +240,6 @@ void menu_init(Menu_t* menu)
   const int menu_ncurses_x = 0;
   menu->width = COLS;
   menu->height = LINES;
-  const int menu_item_width = COLS - MENU_BOX_OFFSET;
   menu->max_items_on_screen = menu->height - MENU_BOX_OFFSET;
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
