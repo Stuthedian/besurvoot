@@ -75,13 +75,16 @@ void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
 
 void menu_repaint_items(Menu_t* menu)
 {
+  const int menu_box_offset = BOX_OFFSET;
+  const int menu_item_width = COLS - menu_box_offset;
+
   for(int i = 0, j = menu->top_of_text_list;
       i < menu->num_items_on_screen; i++, j++)
   {
     //delwin(menu->items[i]) CHECK_ERR;
-    menu->items[i] = derwin(menu->menu_wnd, 1, BOX_OFFSET - 2,
-                            i +  BOX_OFFSET / 2,
-                            0 + BOX_OFFSET  / 2);
+    menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
+                            i + menu_box_offset / 2,
+                            0 + menu_box_offset / 2);
     /*
         if(menu->items[i] == NULL)
         {
@@ -239,9 +242,9 @@ void fill_file_from_list(const Linked_List_t* list)
 
 void menu_init(Menu_t* menu)
 {
-  const int menu_box_offset = BOX_OFFSET;
   const int menu_ncurses_y = 0;
   const int menu_ncurses_x = 0;
+  const int menu_box_offset = BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
   menu->height = LINES;
   menu->max_items_on_screen = menu->height - menu_box_offset;
