@@ -25,17 +25,20 @@ void assert_conditions(Menu_t* menu)
          menu->screen_idx);
 }
 
-int get_height()
+void get_size(int* height, int* width)
 {
   struct winsize size;
   ioctl(fileno(stdout), TIOCGWINSZ,
         (char*) &size) CHECK_IS_NEGATIVE_ONE;
-  return size.ws_row;
+  *height = size.ws_row;
+  *width = size.ws_col;
 }
 
-bool menu_should_resize(const int menu_height)
+bool menu_should_resize(const int menu_height, const int menu_width)
 {
-  return get_height() != menu_height;
+  int term_height, term_width;
+  get_size(&term_height, &term_width);
+  return term_height != menu_height || term_width != menu_width;
 }
 
 void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
@@ -75,33 +78,21 @@ void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
 
 void menu_repaint_items(Menu_t* menu)
 {
-  const int menu_box_offset = BOX_OFFSET;
+  const int menu_box_offset = MENU_BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
 
   for(int i = 0, j = menu->top_of_text_list;
       i < menu->num_items_on_screen; i++, j++)
   {
-    //delwin(menu->items[i]) CHECK_ERR;
     menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
                             i + menu_box_offset / 2,
                             0 + menu_box_offset / 2);
-    /*
-        if(menu->items[i] == NULL)
-        {
-          if(menu_should_resize(menu->height))
-          {
-            menu_resize(menu);
-            return;
-          }
-          else menu->items[i] CHECK_IS_NULL;
-        }*/
-
     wbkgd(menu->items[i],
           COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     CHECK_ERR;
     wclear(menu->items[i]) CHECK_ERR;
-    wprintw(menu->items[i], list_find(&menu->text_list,
-                                      j)) CHECK_ERR;
+    wprintw(menu->items[i], "%.*s", menu_item_width - 1,
+            list_find(&menu->text_list, i)) CHECK_ERR;
   }
 
 
@@ -111,18 +102,21 @@ void menu_repaint_items(Menu_t* menu)
 
 void menu_resize(Menu_t* menu)
 {
-  const int term_height = get_height();
-  const int menu_box_offset = BOX_OFFSET;
+  int term_height, term_width;
+  const int menu_box_offset = MENU_BOX_OFFSET;
 
-  resizeterm(term_height, COLS) CHECK_ERR;
-  wresize(menu->menu_wnd, term_height, COLS) CHECK_ERR;
+  get_size(&term_height, &term_width);
+  resizeterm(term_height, term_width) CHECK_ERR;
+  wresize(menu->menu_wnd, term_height, term_width) CHECK_ERR;
 
   menu->height = term_height;
+  menu->width = term_width;
 
-  if(term_height == 1 || term_height == 2)
+  if((term_height == 1 || term_height == 2) || (term_width == 1
+      || term_width == 2))
   {
     for(int i = 0; i < term_height; i++)
-      mvwhline(menu->menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
+      mvwhline(menu->menu_wnd, i, 0, 'x', term_width) CHECK_ERR;
 
     return;
   }
@@ -164,7 +158,7 @@ void menu_resize(Menu_t* menu)
 
     assert_conditions(menu);
 
-    if(menu_should_resize(menu->height))
+    if(menu_should_resize(menu->height, menu->width))
     {
       menu_resize(menu);
       return;
@@ -244,10 +238,10 @@ void menu_init(Menu_t* menu)
 {
   const int menu_ncurses_y = 0;
   const int menu_ncurses_x = 0;
-  const int menu_box_offset = BOX_OFFSET;
-  const int menu_item_width = COLS - menu_box_offset;
+  menu->width = COLS;
   menu->height = LINES;
-  menu->max_items_on_screen = menu->height - menu_box_offset;
+  const int menu_item_width = COLS - MENU_BOX_OFFSET;
+  menu->max_items_on_screen = menu->height - MENU_BOX_OFFSET;
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
   menu->screen_idx = 0;
@@ -273,7 +267,7 @@ void menu_init(Menu_t* menu)
                               menu->text_list.count ?
                               menu->text_list.count : menu->max_items_on_screen;
 
-  menu->menu_wnd = newwin(menu->height, COLS, menu_ncurses_y,
+  menu->menu_wnd = newwin(menu->height, menu->width, menu_ncurses_y,
                           menu_ncurses_x);
   menu->menu_wnd CHECK_IS_NULL;
 
@@ -295,19 +289,8 @@ void menu_init(Menu_t* menu)
   menu->items CHECK_IS_NULL;
 
   box(menu->menu_wnd, '|', '-') CHECK_ERR;
+  menu_repaint_items(menu);
 
-  for(int i = 0; i < menu->num_items_on_screen; i++)
-  {
-    menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
-                            i + menu_box_offset / 2,
-                            0 + menu_box_offset / 2);
-    menu->items[i] CHECK_IS_NULL;
-    wprintw(menu->items[i], list_find(&menu->text_list, i)) CHECK_ERR;
-  }
-
-  if(menu->num_items_on_screen != 0)
-    wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
 
   touchwin(menu->menu_wnd) CHECK_ERR;
   wrefresh(menu->menu_wnd) CHECK_ERR;
@@ -395,7 +378,7 @@ void menu_wait_for_user_input(Menu_t* menu)
   {
     int ch = wgetch(menu->menu_wnd);
 
-    if(menu_should_resize(menu->height))
+    if(menu_should_resize(menu->height, menu->width))
       menu_resize(menu);
 
     if(menu->height == 1 || menu->height == 2)
@@ -504,13 +487,13 @@ void menu_del_item(Menu_t* menu)
 void menu_add_item(Menu_t* menu)
 {
   char* user_input = NULL;
-  const int menu_item_width = COLS - BOX_OFFSET;
+  const int menu_item_width = COLS - MENU_BOX_OFFSET;
   user_input = malloc(menu_item_width * sizeof(char) + 1);
   user_input CHECK_IS_NULL;
 
   menu->input_wnd = derwin(menu->menu_wnd, 1, menu_item_width,
                            menu->height - 1,
-                           0 + BOX_OFFSET / 2);
+                           0 + MENU_BOX_OFFSET / 2);
   menu->input_wnd CHECK_IS_NULL;
   wbkgd(menu->input_wnd, COLOR_PAIR(3)) CHECK_ERR;
   werase(menu->input_wnd);

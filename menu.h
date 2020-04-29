@@ -7,7 +7,7 @@
 
 #define CHECK_ERR CHECK(==, ERR);
 
-#define BOX_OFFSET 2
+#define MENU_BOX_OFFSET 2
 #define BESURVOOT_FILENAME ".besurvoot_commands"
 
 typedef enum User_action
@@ -22,6 +22,7 @@ typedef enum User_action
 
 typedef struct Menu
 {
+  int width;
   int height;
   WINDOW* menu_wnd;
   WINDOW* input_wnd;
@@ -53,7 +54,7 @@ void menu_wait_for_user_input(Menu_t* menu);
 
 void menu_add_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);
-bool menu_should_resize(const int menu_height);
+bool menu_should_resize(const int menu_height, const int menu_width);
 void menu_resize(Menu_t* menu);
 
 void menu_do_routine();
