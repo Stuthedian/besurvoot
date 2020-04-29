@@ -450,7 +450,9 @@ void menu_add_item(Menu_t* menu)
   werase(menu->input_wnd);
 
   echo() CHECK_ERR;
+  curs_set(TRUE) CHECK_ERR;
   wgetnstr(menu->input_wnd, user_input, menu_item_width) CHECK_ERR;
+  curs_set(FALSE) CHECK_ERR;
   noecho() CHECK_ERR;
 
   delwin(menu->input_wnd) CHECK_ERR;
