@@ -431,10 +431,73 @@ void menu_wait_for_user_input(Menu_t* menu)
   }
 }
 
-/*void menu_del_item(Menu_t *menu)
+void menu_del_item(Menu_t* menu)
 {
-    sig_winch(0);
-}*/
+  /*ll_del(ll_list, text_list_idx)
+   * recalc text_list_idx, screen_idx, top_of_text_list
+   * edge cases: deleted item was last one or first one
+   * edge case: deleting only element from menu(menu becomes empty)
+   *
+   * int new-idx = text_list_idx -1
+   * if(new-idx < 0) our item was the first one
+   * try new-idx = text_list_idx + 1
+   * if(new-idx >= text_list.count) menu is empty!
+   * three scenarios: go up, go down, menu is empty
+   * go up::
+    menu->screen_idx--;
+    menu->text_list_idx--;
+
+    if(menu->screen_idx < 0)
+    {
+      menu->top_of_text_list--;
+      menu->screen_idx++;
+    }
+
+  for(int i = 0; i < num_items_on_screen_prev; i++)
+    delwin(menu->items[i]) CHECK_ERR;
+
+  menu->items = realloc(menu->items,
+                        menu->num_items_on_screen * sizeof(WINDOW*));
+  menu_repaint_items(menu);
+
+    go down::
+    menu->screen_idx++;
+    menu->text_list_idx++;
+
+    if(menu->screen_idx >= menu->max_items_on_screen)
+    {
+      menu->top_of_text_list++;
+      menu->screen_idx--;
+    }
+
+  for(int i = 0; i < num_items_on_screen_prev; i++)
+    delwin(menu->items[i]) CHECK_ERR;
+
+  menu->items = realloc(menu->items,
+                        menu->num_items_on_screen * sizeof(WINDOW*));
+  menu_repaint_items(menu);
+
+  menu is empty::
+  if(menu->text_list.count == 0)
+  {
+    menu->screen_idx = -1;
+    menu->text_list_idx = -1;
+    menu->top_of_text_list = -1;
+  }
+  for(int i = 0; i < num_items_on_screen_prev; i++)
+    delwin(menu->items[i]) CHECK_ERR;
+
+  menu->items = realloc(menu->items,
+                        menu->num_items_on_screen * sizeof(WINDOW*));
+    wclear(menu->menu_wnd) CHECK_ERR;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+    box(menu->menu_wnd, '|', '-') CHECK_ERR;
+
+    assert_conditions(menu);
+   *
+   */
+}
+
 void menu_add_item(Menu_t* menu)
 {
   char* user_input = NULL;
