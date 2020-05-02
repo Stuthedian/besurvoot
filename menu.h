@@ -16,10 +16,13 @@ typedef enum User_action
   UA_ENTER = '\r',
   UA_ADD_ITEM = 'O',
   UA_DEL_ITEM = 'D',
+  UA_MOVE_TO_ITEM = 'G',
 } User_action_e;
 
 typedef struct Menu
 {
+  int row_num;
+
   int width;
   int height;
   WINDOW* menu_wnd;
@@ -50,6 +53,7 @@ void menu_go_up(Menu_t* menu);
 void menu_go_down(Menu_t* menu);
 void menu_wait_for_user_input(Menu_t* menu);
 
+void menu_move_to_item(Menu_t* menu);
 void menu_add_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);
 bool menu_should_resize(const int menu_height, const int menu_width);

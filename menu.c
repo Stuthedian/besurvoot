@@ -2,11 +2,7 @@
 #define BAHT_IMPLEMENTATION
 #include "baht.h"
 
-#include <signal.h>
-#include <string.h>
-#include <termios.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <ctype.h>
 #include <sys/ioctl.h>
 #include <assert.h>
 #include "menu.h"
@@ -94,8 +90,8 @@ void menu_repaint_items(Menu_t* menu)
           COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     BAHT_IS_ERR;
     wclear(menu->items[i]) BAHT_IS_ERR;
-    wprintw(menu->items[i], "%.*s", menu_item_width - 1,
-            list_find(&menu->text_list, j)) BAHT_IS_ERR;
+    wprintw(menu->items[i], "[%d] %s", j+1,
+            list_find(&menu->text_list, j));// BAHT_IS_ERR;
   }
 
 
@@ -246,15 +242,12 @@ void menu_init(Menu_t* menu)
   menu->max_items_on_screen = menu->height - MENU_BOX_OFFSET;
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
+  menu->row_num = 0;
+
   menu->screen_idx = 0;
   menu->text_list_idx = 0;
   menu->top_of_text_list = 0;
 
-  /*list_add(&menu->text_list,  "show firmware");
-  list_add(&menu->text_list,  "reload system");
-  list_add(&menu->text_list,  "show running config");
-  list_add(&menu->text_list,  "show msdp vrf test peers");
-  list_add(&menu->text_list,  "Exit");*/
   list_init(&menu->text_list);
   fill_list_from_file(&menu->text_list);
 
@@ -326,7 +319,8 @@ void menu_go_down(Menu_t* menu)
           i++, j++)
       {
         wclear(menu->items[i]) BAHT_IS_ERR;
-        wprintw(menu->items[i], list_find(&menu->text_list, j)) BAHT_IS_ERR;
+        wprintw(menu->items[i], "[%d] %s", j+1,
+            list_find(&menu->text_list, j));// BAHT_IS_ERR;
       }
 
       menu->screen_idx--;
@@ -359,7 +353,8 @@ void menu_go_up(Menu_t* menu)
           i++, j++)
       {
         wclear(menu->items[i]) BAHT_IS_ERR;
-        wprintw(menu->items[i], list_find(&menu->text_list, j)) BAHT_IS_ERR;
+        wprintw(menu->items[i], "[%d] %s", j+1,
+            list_find(&menu->text_list, j));// BAHT_IS_ERR;
       }
 
       menu->screen_idx++;
@@ -408,6 +403,10 @@ void menu_wait_for_user_input(Menu_t* menu)
       menu_add_item(menu);
       break;
 
+    case UA_MOVE_TO_ITEM:
+      menu_move_to_item(menu);
+      break;
+
     /*case UA_DEL_ITEM:
         menu_del_item(menu); break;*/
     case UA_QUIT:
@@ -416,6 +415,29 @@ void menu_wait_for_user_input(Menu_t* menu)
     case ERR:
     default:
       break;
+    }
+
+    if(ch == ERR)
+      ;//don't touch row_num
+    else if(isdigit(ch))
+      menu->row_num = atoi((char*)&ch);
+    else
+      menu->row_num = 0;
+  }
+}
+
+void menu_move_to_item(Menu_t* menu)
+{
+  if(menu->row_num == 0 || menu->row_num == menu->text_list_idx + 1)
+    return;
+  else
+  {
+    while(menu->row_num != menu->text_list_idx + 1)
+    {
+      if(menu->row_num > menu->text_list_idx + 1)
+        menu_go_down(menu);
+      else
+        menu_go_up(menu);
     }
   }
 }
