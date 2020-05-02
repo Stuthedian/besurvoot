@@ -5,6 +5,7 @@
 #include "linked_list.h"
 
 
+#define NUM_OF_DIGITS 3
 #define MENU_BOX_OFFSET 2
 #define BESURVOOT_FILENAME ".besurvoot_commands"
 
@@ -21,6 +22,7 @@ typedef enum User_action
 
 typedef struct Menu
 {
+  char row_num_str[NUM_OF_DIGITS];
   int row_num;
 
   int width;
@@ -40,6 +42,7 @@ typedef struct Menu
 
 
 int get_height();
+void update_row_num(char* row_num_str, int ch);
 void fill_list_from_file(Linked_List_t* list);
 void fill_file_from_list(const Linked_List_t* list);
 char* remove_newline(char* string);

@@ -14,8 +14,6 @@ void assert_conditions(Menu_t* menu)
   assert(menu->num_items_on_screen >= 0);
   assert(menu->text_list_idx >= 0
          && menu->text_list_idx < menu->text_list.count);
-  assert(menu->screen_idx >= 0
-         && menu->screen_idx < menu->max_items_on_screen);
   assert(menu->top_of_text_list >= 0
          && menu->top_of_text_list < menu->text_list.count);
   assert(menu->screen_idx >= 0
@@ -243,6 +241,7 @@ void menu_init(Menu_t* menu)
   menu->max_items_on_screen = menu->max_items_on_screen < 0 ? 0 :
                               menu->max_items_on_screen;
   menu->row_num = 0;
+  memset(menu->row_num_str, '\0', NUM_OF_DIGITS);
 
   menu->screen_idx = 0;
   menu->text_list_idx = 0;
@@ -417,24 +416,42 @@ void menu_wait_for_user_input(Menu_t* menu)
       break;
     }
 
-    if(ch == ERR)
-      ;//don't touch row_num
-    else if(isdigit(ch))
-      menu->row_num = atoi((char*)&ch);
-    else
-      menu->row_num = 0;
+    if(ch != ERR)
+      update_row_num(menu->row_num_str, ch);
   }
+}
+
+void update_row_num(char* row_num_str, int ch)
+{
+  if(isdigit(ch))
+  {
+    for(int i = 0; i < NUM_OF_DIGITS; i++)
+    {
+      if(row_num_str[i] == '\0')
+      {
+        row_num_str[i] = (char)ch;
+        break;
+      }
+    }
+  }
+  else
+    memset(row_num_str, '\0', NUM_OF_DIGITS);
 }
 
 void menu_move_to_item(Menu_t* menu)
 {
-  if(menu->row_num == 0 || menu->row_num == menu->text_list_idx + 1)
+  int row_num = strtoul(menu->row_num_str, NULL, 10);
+
+  if(row_num == 0 || row_num == menu->text_list_idx + 1)
     return;
   else
   {
-    while(menu->row_num != menu->text_list_idx + 1)
+    if(row_num > menu->text_list.count)
+      row_num = menu->text_list.count;
+
+    while(row_num != menu->text_list_idx + 1)
     {
-      if(menu->row_num > menu->text_list_idx + 1)
+      if(row_num > menu->text_list_idx + 1)
         menu_go_down(menu);
       else
         menu_go_up(menu);
