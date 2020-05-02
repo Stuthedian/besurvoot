@@ -383,7 +383,8 @@ void menu_wait_for_user_input(Menu_t* menu)
     if(menu_should_resize(menu->height, menu->width))
       menu_resize(menu);
 
-    if(menu->height == 1 || menu->height == 2)
+    if((menu->height == 1 || menu->height == 2)
+        || (menu->width == 1 || menu->width == 2))
       if(ch != UA_QUIT)
         ch = ERR;
 
