@@ -370,6 +370,8 @@ void menu_go_up(Menu_t* menu)
 
 void menu_wait_for_user_input(Menu_t* menu)
 {
+  bool was_move_to_item2_pressed = FALSE;
+
   while(1)
   {
     int ch = wgetch(menu->menu_wnd);
@@ -406,6 +408,16 @@ void menu_wait_for_user_input(Menu_t* menu)
       menu_move_to_item(menu);
       break;
 
+    case UA_MOVE_TO_ITEM2:
+      if(was_move_to_item2_pressed == FALSE)
+        was_move_to_item2_pressed = TRUE;
+      else
+      {
+        was_move_to_item2_pressed = FALSE;
+        menu_move_to_item(menu);
+      }
+      break;
+
     /*case UA_DEL_ITEM:
         menu_del_item(menu); break;*/
     case UA_QUIT:
@@ -416,8 +428,12 @@ void menu_wait_for_user_input(Menu_t* menu)
       break;
     }
 
-    if(ch != ERR)
+
+    if(ch != ERR && was_move_to_item2_pressed != TRUE)
+    {
       update_row_num(menu->row_num_str, ch);
+      was_move_to_item2_pressed = FALSE;
+    }
   }
 }
 
