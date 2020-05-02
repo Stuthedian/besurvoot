@@ -89,7 +89,7 @@ void menu_repaint_items(Menu_t* menu)
     BAHT_IS_ERR;
     wclear(menu->items[i]) BAHT_IS_ERR;
     wprintw(menu->items[i], "[%d] %s", j+1,
-            list_find(&menu->text_list, j));// BAHT_IS_ERR;
+            list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
   }
 
 
@@ -224,7 +224,7 @@ void fill_file_from_list(const Linked_List_t* list)
 
   for(int i = 0; i < list->count; i++)
   {
-    fputs(list_find(list, i), file) BAHT_IS_EOF_ERRNO;
+    fputs(list_get_value(list, i), file) BAHT_IS_EOF_ERRNO;
     fputc('\n', file) BAHT_IS_EOF_ERRNO;
   }
 
@@ -319,7 +319,7 @@ void menu_go_down(Menu_t* menu)
       {
         wclear(menu->items[i]) BAHT_IS_ERR;
         wprintw(menu->items[i], "[%d] %s", j+1,
-            list_find(&menu->text_list, j));// BAHT_IS_ERR;
+            list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
       }
 
       menu->screen_idx--;
@@ -353,7 +353,7 @@ void menu_go_up(Menu_t* menu)
       {
         wclear(menu->items[i]) BAHT_IS_ERR;
         wprintw(menu->items[i], "[%d] %s", j+1,
-            list_find(&menu->text_list, j));// BAHT_IS_ERR;
+            list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
       }
 
       menu->screen_idx++;
@@ -582,7 +582,7 @@ void menu_act_on_item(Menu_t* menu)
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ! \"";
   char* suffix = "\" Enter";
-  char* command = list_find(&menu->text_list, menu->text_list_idx);
+  char* command = list_get_value(&menu->text_list, menu->text_list_idx);
 
   if(command == NULL)
     return;

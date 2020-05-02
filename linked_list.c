@@ -34,6 +34,18 @@ void list_add(Linked_List_t* ll_list, char* str)
   ll_list->count++;
 }
 
+void list_del(Linked_List_t* ll_list, int index)
+{
+  struct Linked_List_Node* node = list_find(ll_list, index);
+
+  if(node == NULL)
+    return;
+
+  node->prev->next = node->next;
+  node->next->prev = node->prev;
+  free(node);
+}
+
 void list_destroy(Linked_List_t* ll_list)
 {
   struct Linked_List_Node* next_to_free = NULL;
@@ -50,9 +62,20 @@ void list_destroy(Linked_List_t* ll_list)
   ll_list->last = NULL;
 }
 
-char* list_find(const Linked_List_t* ll_list, int index)
+char* list_get_value(const Linked_List_t* ll_list, int index)
 {
   char* result_str = NULL;
+  struct Linked_List_Node* node = list_find(ll_list, index);
+
+  if(node != NULL)
+    result_str = node->text;
+
+  return result_str;
+}
+
+struct Linked_List_Node* list_find(const Linked_List_t* ll_list, int index)
+{
+  struct Linked_List_Node* result_node = NULL;
   struct Linked_List_Node* node = ll_list->first;
 
   if(index < 0)
@@ -71,11 +94,11 @@ char* list_find(const Linked_List_t* ll_list, int index)
     }
     else
     {
-      result_str = node->text;
+      result_node = node;
       goto EXIT;
     }
   }
 
 EXIT:
-  return result_str;
+  return result_node;
 }
