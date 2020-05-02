@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "check.h"
 #include "linked_list.h"
+#include "baht.h"
 
 void list_init(Linked_List_t* ll_list)
 {
@@ -13,7 +13,7 @@ void list_add(Linked_List_t* ll_list, char* str)
 {
   struct Linked_List_Node* ll_node = malloc(sizeof(
                                        struct Linked_List_Node));
-  ll_node CHECK_IS_NULL;
+  ll_node BAHT_IS_NULL_ERRNO;
   strncpy(ll_node->text, str, STRING_WIDTH);
 
   if(ll_list->first == NULL && ll_list->last == NULL)

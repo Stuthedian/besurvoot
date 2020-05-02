@@ -2,10 +2,8 @@
 #define _MENU_H_
 
 #include <curses.h>
-#include "check.h"
 #include "linked_list.h"
 
-#define CHECK_ERR CHECK(==, ERR);
 
 #define MENU_BOX_OFFSET 2
 #define BESURVOOT_FILENAME ".besurvoot_commands"

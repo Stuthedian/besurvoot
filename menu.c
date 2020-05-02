@@ -1,4 +1,7 @@
-#define _POSIX_C_SOURCE  1
+#define BAHT_NCURSES
+#define BAHT_IMPLEMENTATION
+#include "baht.h"
+
 #include <signal.h>
 #include <string.h>
 #include <termios.h>
@@ -29,7 +32,7 @@ void get_size(int* height, int* width)
 {
   struct winsize size;
   ioctl(fileno(stdout), TIOCGWINSZ,
-        (char*) &size) CHECK_IS_NEGATIVE_ONE;
+        (char*) &size) BAHT_IS_NEG_1_ERRNO;
   *height = size.ws_row;
   *width = size.ws_col;
 }
@@ -89,15 +92,15 @@ void menu_repaint_items(Menu_t* menu)
                             0 + menu_box_offset / 2);
     wbkgd(menu->items[i],
           COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
-    CHECK_ERR;
-    wclear(menu->items[i]) CHECK_ERR;
+    BAHT_IS_ERR;
+    wclear(menu->items[i]) BAHT_IS_ERR;
     wprintw(menu->items[i], "%.*s", menu_item_width - 1,
-            list_find(&menu->text_list, j)) CHECK_ERR;
+            list_find(&menu->text_list, j)) BAHT_IS_ERR;
   }
 
 
-  touchwin(menu->menu_wnd) CHECK_ERR;
-  wrefresh(menu->menu_wnd) CHECK_ERR;
+  touchwin(menu->menu_wnd) BAHT_IS_ERR;
+  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_resize(Menu_t* menu)
@@ -106,8 +109,8 @@ void menu_resize(Menu_t* menu)
   const int menu_box_offset = MENU_BOX_OFFSET;
 
   get_size(&term_height, &term_width);
-  resizeterm(term_height, term_width) CHECK_ERR;
-  wresize(menu->menu_wnd, term_height, term_width) CHECK_ERR;
+  resizeterm(term_height, term_width) BAHT_IS_ERR;
+  wresize(menu->menu_wnd, term_height, term_width) BAHT_IS_ERR;
 
   menu->height = term_height;
   menu->width = term_width;
@@ -116,15 +119,15 @@ void menu_resize(Menu_t* menu)
       || term_width == 2))
   {
     for(int i = 0; i < term_height; i++)
-      mvwhline(menu->menu_wnd, i, 0, 'x', term_width) CHECK_ERR;
+      mvwhline(menu->menu_wnd, i, 0, 'x', term_width) BAHT_IS_ERR;
 
     return;
   }
   else
   {
-    wclear(menu->menu_wnd) CHECK_ERR;
-    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-    box(menu->menu_wnd, '|', '-') CHECK_ERR;
+    wclear(menu->menu_wnd) BAHT_IS_ERR;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
+    box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
   }
 
   menu->max_items_on_screen = menu->height - menu_box_offset;
@@ -144,7 +147,7 @@ void menu_resize(Menu_t* menu)
                                        num_items_on_screen_prev;
 
   for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) CHECK_ERR;
+    delwin(menu->items[i]) BAHT_IS_ERR;
 
   menu->items = realloc(menu->items,
                         menu->num_items_on_screen * sizeof(WINDOW*));
@@ -169,28 +172,28 @@ void menu_resize(Menu_t* menu)
 
 void ncurses_init()
 {
-  initscr() CHECK_IS_NULL;
-  cbreak() CHECK_ERR;
-  noecho() CHECK_ERR;
+  initscr() BAHT_IS_NULL_ERRNO;
+  cbreak() BAHT_IS_ERR;
+  noecho() BAHT_IS_ERR;
 
-  curs_set(FALSE) CHECK_ERR;
+  curs_set(FALSE) BAHT_IS_ERR;
 
-  start_color() CHECK_ERR;
-  init_pair(1, COLOR_YELLOW, COLOR_BLUE) CHECK_ERR;
-  init_pair(3, COLOR_GREEN, COLOR_BLACK) CHECK_ERR;
+  start_color() BAHT_IS_ERR;
+  init_pair(1, COLOR_YELLOW, COLOR_BLUE) BAHT_IS_ERR;
+  init_pair(3, COLOR_GREEN, COLOR_BLACK) BAHT_IS_ERR;
 
-  nonl() CHECK_ERR;
-  intrflush(stdscr, FALSE) CHECK_ERR;
-  keypad(stdscr, TRUE) CHECK_ERR;
+  nonl() BAHT_IS_ERR;
+  intrflush(stdscr, FALSE) BAHT_IS_ERR;
+  keypad(stdscr, TRUE) BAHT_IS_ERR;
 
-  halfdelay(5) CHECK_ERR;
+  halfdelay(5) BAHT_IS_ERR;
 
-  refresh() CHECK_ERR;
+  refresh() BAHT_IS_ERR;
 }
 
 void ncurses_destroy()
 {
-  endwin() CHECK_ERR;
+  endwin() BAHT_IS_ERR;
 }
 
 char* remove_newline(char* string)
@@ -207,7 +210,7 @@ void fill_list_from_file(Linked_List_t* list)
 {
   char temp_str[STRING_WIDTH];
   FILE* file = fopen(BESURVOOT_FILENAME, "a+");
-  file CHECK_IS_NULL;
+  file BAHT_IS_NULL_ERRNO;
 
   while(TRUE)
   {
@@ -217,21 +220,21 @@ void fill_list_from_file(Linked_List_t* list)
     list_add(list, remove_newline(temp_str));
   }
 
-  fclose(file) CHECK( ==, EOF);
+  fclose(file) BAHT_IS_EOF_ERRNO;
 }
 
 void fill_file_from_list(const Linked_List_t* list)
 {
   FILE* file = fopen(BESURVOOT_FILENAME, "w");
-  file CHECK_IS_NULL;
+  file BAHT_IS_NULL_ERRNO;
 
   for(int i = 0; i < list->count; i++)
   {
-    fputs(list_find(list, i), file) CHECK( ==, EOF);
-    fputc('\n', file) CHECK( ==, EOF);
+    fputs(list_find(list, i), file) BAHT_IS_EOF_ERRNO;
+    fputc('\n', file) BAHT_IS_EOF_ERRNO;
   }
 
-  fclose(file) CHECK( ==, EOF);
+  fclose(file) BAHT_IS_EOF_ERRNO;
 }
 
 void menu_init(Menu_t* menu)
@@ -268,41 +271,41 @@ void menu_init(Menu_t* menu)
 
   menu->menu_wnd = newwin(menu->height, menu->width, menu_ncurses_y,
                           menu_ncurses_x);
-  menu->menu_wnd CHECK_IS_NULL;
+  menu->menu_wnd BAHT_IS_NULL_ERRNO;
 
-  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
+  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
 
   menu->items = NULL;
 
   if(menu->max_items_on_screen == 0)
   {
     for(int i = 0; i < menu->height; i++)
-      mvwhline(menu->menu_wnd, i, 0, 'x', COLS) CHECK_ERR;
+      mvwhline(menu->menu_wnd, i, 0, 'x', COLS) BAHT_IS_ERR;
 
-    wrefresh(menu->menu_wnd) CHECK_ERR;
+    wrefresh(menu->menu_wnd) BAHT_IS_ERR;
     menu->height = 0;
     return;
   }
 
   menu->items = malloc(menu->num_items_on_screen * sizeof(WINDOW*));
-  menu->items CHECK_IS_NULL;
+  menu->items BAHT_IS_NULL_ERRNO;
 
-  box(menu->menu_wnd, '|', '-') CHECK_ERR;
+  box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
   menu_repaint_items(menu);
 
 
-  touchwin(menu->menu_wnd) CHECK_ERR;
-  wrefresh(menu->menu_wnd) CHECK_ERR;
+  touchwin(menu->menu_wnd) BAHT_IS_ERR;
+  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_destroy(Menu_t* menu)
 {
   for(int i = 0; i < menu->num_items_on_screen; i++)
-    delwin(menu->items[i]) CHECK_ERR;
+    delwin(menu->items[i]) BAHT_IS_ERR;
 
   list_destroy(&menu->text_list);
   free(menu->items);
-  delwin(menu->menu_wnd) CHECK_ERR;
+  delwin(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_go_down(Menu_t* menu)
@@ -310,7 +313,7 @@ void menu_go_down(Menu_t* menu)
   if(menu->text_list_idx + 1 < menu->text_list.count)
   {
     wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
+          COLOR_PAIR(1) | A_NORMAL) BAHT_IS_ERR;
     menu->screen_idx++;
     menu->text_list_idx++;
 
@@ -322,8 +325,8 @@ void menu_go_down(Menu_t* menu)
           i < menu->num_items_on_screen;
           i++, j++)
       {
-        wclear(menu->items[i]) CHECK_ERR;
-        wprintw(menu->items[i], list_find(&menu->text_list, j)) CHECK_ERR;
+        wclear(menu->items[i]) BAHT_IS_ERR;
+        wprintw(menu->items[i], list_find(&menu->text_list, j)) BAHT_IS_ERR;
       }
 
       menu->screen_idx--;
@@ -332,9 +335,9 @@ void menu_go_down(Menu_t* menu)
     assert_conditions(menu);
 
     wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-    touchwin(menu->menu_wnd) CHECK_ERR;
-    wrefresh(menu->menu_wnd) CHECK_ERR;
+          COLOR_PAIR(1) | A_REVERSE) BAHT_IS_ERR;
+    touchwin(menu->menu_wnd) BAHT_IS_ERR;
+    wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   }
 }
 
@@ -343,7 +346,7 @@ void menu_go_up(Menu_t* menu)
   if(menu->text_list_idx - 1 >= 0)
   {
     wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_NORMAL) CHECK_ERR;
+          COLOR_PAIR(1) | A_NORMAL) BAHT_IS_ERR;
     menu->screen_idx--;
     menu->text_list_idx--;
 
@@ -355,8 +358,8 @@ void menu_go_up(Menu_t* menu)
           i < menu->num_items_on_screen;
           i++, j++)
       {
-        wclear(menu->items[i]) CHECK_ERR;
-        wprintw(menu->items[i], list_find(&menu->text_list, j)) CHECK_ERR;
+        wclear(menu->items[i]) BAHT_IS_ERR;
+        wprintw(menu->items[i], list_find(&menu->text_list, j)) BAHT_IS_ERR;
       }
 
       menu->screen_idx++;
@@ -365,9 +368,9 @@ void menu_go_up(Menu_t* menu)
     assert_conditions(menu);
 
     wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_REVERSE) CHECK_ERR;
-    touchwin(menu->menu_wnd) CHECK_ERR;
-    wrefresh(menu->menu_wnd) CHECK_ERR;
+          COLOR_PAIR(1) | A_REVERSE) BAHT_IS_ERR;
+    touchwin(menu->menu_wnd) BAHT_IS_ERR;
+    wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   }
 }
 
@@ -439,7 +442,7 @@ void menu_del_item(Menu_t* menu)
     }
 
   for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) CHECK_ERR;
+    delwin(menu->items[i]) BAHT_IS_ERR;
 
   menu->items = realloc(menu->items,
                         menu->num_items_on_screen * sizeof(WINDOW*));
@@ -456,7 +459,7 @@ void menu_del_item(Menu_t* menu)
     }
 
   for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) CHECK_ERR;
+    delwin(menu->items[i]) BAHT_IS_ERR;
 
   menu->items = realloc(menu->items,
                         menu->num_items_on_screen * sizeof(WINDOW*));
@@ -470,13 +473,13 @@ void menu_del_item(Menu_t* menu)
     menu->top_of_text_list = -1;
   }
   for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) CHECK_ERR;
+    delwin(menu->items[i]) BAHT_IS_ERR;
 
   menu->items = realloc(menu->items,
                         menu->num_items_on_screen * sizeof(WINDOW*));
-    wclear(menu->menu_wnd) CHECK_ERR;
-    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) CHECK_ERR;
-    box(menu->menu_wnd, '|', '-') CHECK_ERR;
+    wclear(menu->menu_wnd) BAHT_IS_ERR;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
+    box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
 
     assert_conditions(menu);
    *
@@ -488,22 +491,22 @@ void menu_add_item(Menu_t* menu)
   char* user_input = NULL;
   const int menu_item_width = COLS - MENU_BOX_OFFSET;
   user_input = malloc(menu_item_width * sizeof(char) + 1);
-  user_input CHECK_IS_NULL;
+  user_input BAHT_IS_NULL_ERRNO;
 
   menu->input_wnd = derwin(menu->menu_wnd, 1, menu_item_width,
                            menu->height - 1,
                            0 + MENU_BOX_OFFSET / 2);
-  menu->input_wnd CHECK_IS_NULL;
-  wbkgd(menu->input_wnd, COLOR_PAIR(3)) CHECK_ERR;
+  menu->input_wnd BAHT_IS_NULL;
+  wbkgd(menu->input_wnd, COLOR_PAIR(3)) BAHT_IS_ERR;
   werase(menu->input_wnd);
 
-  echo() CHECK_ERR;
-  curs_set(TRUE) CHECK_ERR;
-  wgetnstr(menu->input_wnd, user_input, menu_item_width) CHECK_ERR;
-  curs_set(FALSE) CHECK_ERR;
-  noecho() CHECK_ERR;
+  echo() BAHT_IS_ERR;
+  curs_set(TRUE) BAHT_IS_ERR;
+  wgetnstr(menu->input_wnd, user_input, menu_item_width) BAHT_IS_ERR;
+  curs_set(FALSE) BAHT_IS_ERR;
+  noecho() BAHT_IS_ERR;
 
-  delwin(menu->input_wnd) CHECK_ERR;
+  delwin(menu->input_wnd) BAHT_IS_ERR;
   list_add(&menu->text_list, user_input);
   free(user_input);
 
@@ -530,14 +533,14 @@ void menu_act_on_item(Menu_t* menu)
 
   result_command = malloc(strlen(prefix) + strlen(command) + strlen(
                             suffix) + 1);
-  result_command CHECK_IS_NULL;
+  result_command BAHT_IS_NULL_ERRNO;
   result_command[0] = '\0';
 
   strcat(result_command, prefix);
   strcat(result_command, command);
   strcat(result_command, suffix);
 
-  system(result_command) CHECK_IS_NEGATIVE_ONE;
+  system(result_command) BAHT_IS_NEG_1_ERRNO;
 
   free(result_command);
 }

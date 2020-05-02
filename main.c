@@ -1,11 +1,16 @@
 #include <stdio.h>
 #include "menu.h"
+#include "baht.h"
 
 int main()
 {
-    ncurses_init();
-    menu_do_routine();
-	ncurses_destroy();
+  baht_init();
+  baht_catch_sigsegv();
+  baht_catch_sigabort();
 
-    return 0;
+  ncurses_init();
+  menu_do_routine();
+  ncurses_destroy();
+
+  return 0;
 }
