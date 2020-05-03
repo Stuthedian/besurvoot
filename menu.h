@@ -53,8 +53,8 @@ void ncurses_destroy();
 void menu_init(Menu_t* menu);
 void menu_destroy(Menu_t* menu);
 
-void menu_go_up(Menu_t* menu);
-void menu_go_down(Menu_t* menu);
+void menu_go_up(Menu_t* menu, int repeat_count);
+void menu_go_down(Menu_t* menu, int repeat_count);
 void menu_wait_for_user_input(Menu_t* menu);
 
 void menu_move_to_item(Menu_t* menu);

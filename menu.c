@@ -313,46 +313,57 @@ void menu_destroy(Menu_t* menu)
   delwin(menu->menu_wnd) BAHT_IS_ERR;
 }
 
-void menu_go_down(Menu_t* menu)
+void menu_go_down(Menu_t* menu, int repeat_count)
 {
-  if(menu->text_list_idx + 1 < menu->text_list.count)
+  if(repeat_count <= 0)
+    return;
+
+  for(int i = 0; i < repeat_count; i++)
   {
-    menu->screen_idx++;
-    menu->text_list_idx++;
-
-    if(menu->screen_idx >= menu->max_items_on_screen)
+    if(menu->text_list_idx + 1 < menu->text_list.count)
     {
-      menu->top_of_text_list++;
-      menu->screen_idx--;
+      menu->screen_idx++;
+      menu->text_list_idx++;
+
+      if(menu->screen_idx >= menu->max_items_on_screen)
+      {
+        menu->top_of_text_list++;
+        menu->screen_idx--;
+      }
+
+      assert_conditions(menu);
     }
-
-    menu_repaint_items(menu);
-    assert_conditions(menu);
-
-    touchwin(menu->menu_wnd) BAHT_IS_ERR;
-    wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   }
+
+  menu_repaint_items(menu);
+  touchwin(menu->menu_wnd) BAHT_IS_ERR;
+  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
-void menu_go_up(Menu_t* menu)
+void menu_go_up(Menu_t* menu, int repeat_count)
 {
-  if(menu->text_list_idx - 1 >= 0)
+  if(repeat_count <= 0)
+    return;
+
+  for(int i = 0; i < repeat_count; i++)
   {
-    menu->screen_idx--;
-    menu->text_list_idx--;
-
-    if(menu->screen_idx < 0)
+    if(menu->text_list_idx - 1 >= 0)
     {
-      menu->top_of_text_list--;
-      menu->screen_idx++;
+      menu->screen_idx--;
+      menu->text_list_idx--;
+
+      if(menu->screen_idx < 0)
+      {
+        menu->top_of_text_list--;
+        menu->screen_idx++;
+      }
     }
-
-    menu_repaint_items(menu);
     assert_conditions(menu);
-
-    touchwin(menu->menu_wnd) BAHT_IS_ERR;
-    wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   }
+
+  menu_repaint_items(menu);
+  touchwin(menu->menu_wnd) BAHT_IS_ERR;
+  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_wait_for_user_input(Menu_t* menu)
@@ -375,12 +386,12 @@ void menu_wait_for_user_input(Menu_t* menu)
     {
     case UA_DOWN:
     case KEY_DOWN:
-      menu_go_down(menu);
+      menu_go_down(menu, 1);
       break;
 
     case UA_UP:
     case KEY_UP:
-      menu_go_up(menu);
+      menu_go_up(menu, 1);
       break;
 
     case UA_ENTER:
@@ -454,13 +465,12 @@ void menu_move_to_item(Menu_t* menu)
     if(row_num > menu->text_list.count)
       row_num = menu->text_list.count;
 
-    while(row_num != menu->text_list_idx + 1)
-    {
-      if(row_num > menu->text_list_idx + 1)
-        menu_go_down(menu);
-      else
-        menu_go_up(menu);
-    }
+    int diff = row_num - (menu->text_list_idx + 1);
+
+    if(diff > 0)
+      menu_go_down(menu, abs(diff));
+    else
+      menu_go_up(menu, abs(diff));
   }
 }
 
@@ -545,8 +555,7 @@ void menu_add_item(Menu_t* menu)
 
   menu_resize(menu);
 
-  while(menu->text_list_idx != menu->text_list.count - 1)
-    menu_go_down(menu);
+  menu_go_down(menu, menu->text_list.count - 1 - menu->text_list_idx);
 }
 
 void menu_act_on_item(Menu_t* menu)
