@@ -59,6 +59,7 @@ void menu_wait_for_user_input(Menu_t* menu);
 
 void menu_move_to_item(Menu_t* menu);
 void menu_add_item(Menu_t* menu);
+void menu_del_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);
 bool menu_should_resize(const int menu_height, const int menu_width);
 void menu_resize(Menu_t* menu);

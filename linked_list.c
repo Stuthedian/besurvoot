@@ -41,9 +41,20 @@ void list_del(Linked_List_t* ll_list, int index)
   if(node == NULL)
     return;
 
-  node->prev->next = node->next;
-  node->next->prev = node->prev;
+  if(node == ll_list->first)
+    ll_list->first = node->next;
+
+  if(node == ll_list->last)
+    ll_list->last = node->prev;
+
+  if(node->prev != NULL)
+    node->prev->next = node->next;
+
+  if(node->next != NULL)
+    node->next->prev = node->prev;
+
   free(node);
+  ll_list->count--;
 }
 
 void list_destroy(Linked_List_t* ll_list)
