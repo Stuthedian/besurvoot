@@ -73,17 +73,25 @@ void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
   }
 }
 
-void menu_repaint_items(Menu_t* menu)
+void menu_allocate_items(Menu_t* menu)
 {
   const int menu_box_offset = MENU_BOX_OFFSET;
   const int menu_item_width = COLS - menu_box_offset;
 
-  for(int i = 0, j = menu->top_of_text_list;
-      i < menu->num_items_on_screen; i++, j++)
+  for(int i = 0; i < menu->num_items_on_screen; i++)
   {
     menu->items[i] = derwin(menu->menu_wnd, 1, menu_item_width,
                             i + menu_box_offset / 2,
                             0 + menu_box_offset / 2);
+    menu->items[i] BAHT_IS_NULL;
+  }
+}
+
+void menu_repaint_items(Menu_t* menu)
+{
+  for(int i = 0, j = menu->top_of_text_list;
+      i < menu->num_items_on_screen; i++, j++)
+  {
     wbkgd(menu->items[i],
           COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     BAHT_IS_ERR;
@@ -160,7 +168,11 @@ void menu_resize(Menu_t* menu)
       menu_resize(menu);
       return;
     }
-    else menu_repaint_items(menu);
+    else
+    {
+      menu_allocate_items(menu);
+      menu_repaint_items(menu);
+    }
   }
 }
 
@@ -283,6 +295,7 @@ void menu_init(Menu_t* menu)
   menu->items BAHT_IS_NULL_ERRNO;
 
   box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
+  menu_allocate_items(menu);
   menu_repaint_items(menu);
 
 
@@ -495,12 +508,12 @@ void menu_del_item(Menu_t* menu)
       int num_below_screen = menu->text_list.count - menu->num_items_on_screen;
       if(num_below_screen > 0)
       {
-        for(int i = 0; i < menu->num_items_on_screen; i++)
+        /*for(int i = 0; i < menu->num_items_on_screen; i++)
         {
           delwin(menu->items[i]) BAHT_IS_ERR;
         }
         menu->items = realloc(menu->items,
-            menu->num_items_on_screen * sizeof(WINDOW*));
+            menu->num_items_on_screen * sizeof(WINDOW*));*/
 
         menu->screen_idx--;
         wclear(menu->menu_wnd) BAHT_IS_ERR;
@@ -522,19 +535,20 @@ void menu_del_item(Menu_t* menu)
         wclear(menu->menu_wnd) BAHT_IS_ERR;
         wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
         box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
+        menu_allocate_items(menu);
         menu_repaint_items(menu);
       }
     }
     else
     {
       menu->top_of_text_list--;
-      for(int i = 0; i < menu->num_items_on_screen; i++)
+      /*for(int i = 0; i < menu->num_items_on_screen; i++)
       {
         wclear(menu->items[i]) BAHT_IS_ERR;
         delwin(menu->items[i]) BAHT_IS_ERR;
       }
       menu->items = realloc(menu->items,
-          menu->num_items_on_screen * sizeof(WINDOW*));
+          menu->num_items_on_screen * sizeof(WINDOW*));*/
       menu_repaint_items(menu);
     }
     /*menu->screen_idx--;
