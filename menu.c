@@ -357,8 +357,9 @@ void menu_go_up(Menu_t* menu, int repeat_count)
         menu->top_of_text_list--;
         menu->screen_idx++;
       }
+
+      assert_conditions(menu);
     }
-    assert_conditions(menu);
   }
 
   menu_repaint_items(menu);
@@ -381,6 +382,9 @@ void menu_wait_for_user_input(Menu_t* menu)
         || (menu->width == 1 || menu->width == 2))
       if(ch != UA_QUIT)
         ch = ERR;
+
+    if(menu->text_list.count == 0 && (ch != UA_QUIT && ch != UA_ADD_ITEM))
+      ch = ERR;
 
     switch(ch)
     {
