@@ -23,6 +23,8 @@ typedef enum User_action
 
 typedef struct Menu
 {
+  int is_active;
+
   char row_num_str[NUM_OF_DIGITS];
   int row_num;
 
@@ -58,6 +60,7 @@ void menu_go_down(Menu_t* menu, int repeat_count);
 void menu_wait_for_user_input(Menu_t* menu);
 
 void menu_move_to_item(Menu_t* menu);
+void menu_recolor(Menu_t* menu);
 void menu_add_item(Menu_t* menu);
 void menu_del_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);

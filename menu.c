@@ -1,5 +1,6 @@
 #define BAHT_NCURSES
 #define BAHT_IMPLEMENTATION
+#define _POSIX_C_SOURCE 2
 #include "baht.h"
 
 #include <ctype.h>
@@ -186,6 +187,7 @@ void ncurses_init()
 
   start_color() BAHT_IS_ERR;
   init_pair(1, COLOR_YELLOW, COLOR_BLUE) BAHT_IS_ERR;
+  init_pair(2, COLOR_WHITE, COLOR_BLACK) BAHT_IS_ERR;
   init_pair(3, COLOR_GREEN, COLOR_BLACK) BAHT_IS_ERR;
 
   nonl() BAHT_IS_ERR;
@@ -247,6 +249,7 @@ void menu_init(Menu_t* menu)
 {
   const int menu_ncurses_y = 0;
   const int menu_ncurses_x = 0;
+  menu->is_active = 1;
   menu->width = COLS;
   menu->height = LINES;
   menu->max_items_on_screen = menu->height - MENU_BOX_OFFSET;
@@ -367,6 +370,29 @@ void menu_go_up(Menu_t* menu, int repeat_count)
   wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
+void menu_recolor(Menu_t* menu)
+{
+  char* command = "tmux display-message -p -t $TMUX_PANE -F '#{pane_active}'";
+  FILE* pipe = popen(command, "r");
+  pipe BAHT_IS_NULL_ERRNO;
+
+  int result = fgetc(pipe);
+
+  if(result == '0' && menu->is_active)
+  {
+    menu->is_active = 0;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(2)) BAHT_IS_ERR;
+  }
+  else if(result == '1' && !menu->is_active)
+  {
+    menu->is_active = 1;
+    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
+  }
+
+  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
+  pclose(pipe) BAHT_IS_NEG_1_ERRNO;
+}
+
 void menu_wait_for_user_input(Menu_t* menu)
 {
   bool was_move_to_item2_pressed = FALSE;
@@ -374,6 +400,7 @@ void menu_wait_for_user_input(Menu_t* menu)
   while(1)
   {
     int ch = wgetch(menu->menu_wnd);
+    menu_recolor(menu);
 
     if(menu_should_resize(menu->height, menu->width))
       menu_resize(menu);
