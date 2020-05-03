@@ -8,19 +8,19 @@
 #include "menu.h"
 
 
-void assert_conditions(Menu_t* menu)
-{
-  assert(menu->max_items_on_screen >= 0);
-  assert(menu->num_items_on_screen >= 0);
-  assert(menu->text_list_idx >= 0
-         && menu->text_list_idx < menu->text_list.count);
-  assert(menu->top_of_text_list >= 0
-         && menu->top_of_text_list < menu->text_list.count);
-  assert(menu->screen_idx >= 0
-         && menu->screen_idx < menu->num_items_on_screen);
-  assert(menu->text_list_idx == menu->top_of_text_list +
-         menu->screen_idx);
-}
+#define assert_conditions(menu) do\
+{\
+  assert(menu->max_items_on_screen >= 0);\
+  assert(menu->num_items_on_screen >= 0);\
+  assert(menu->text_list_idx >= 0\
+         && menu->text_list_idx < menu->text_list.count);\
+  assert(menu->top_of_text_list >= 0\
+         && menu->top_of_text_list < menu->text_list.count);\
+  assert(menu->screen_idx >= 0\
+         && menu->screen_idx < menu->num_items_on_screen);\
+  assert(menu->text_list_idx == menu->top_of_text_list +\
+         menu->screen_idx);\
+} while(0)
 
 void get_size(int* height, int* width)
 {
