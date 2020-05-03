@@ -45,7 +45,7 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
 
   if(num_of_hidden_items > 0)
   {
-    int num_above_screen = menu->top_of_text_list;//Redundant?
+    int num_above_screen = menu->top_of_text_list;
     int num_below_screen = menu->text_list.count - (menu->top_of_text_list
                            + num_items_on_screen_prev);
     assert(num_below_screen >= 0);
@@ -565,21 +565,23 @@ void menu_add_item(Menu_t* menu)
 void menu_act_on_item(Menu_t* menu)
 {
   char* result_command = NULL;
-  char* prefix = "tmux send-keys -t ! \"";
-  char* suffix = "\" Enter";
+  char* prefix = "tmux send-keys -t ";
+  char* target_pane = menu->row_num_str[0] == '\0' ? "!" : menu->row_num_str;
   char* command = list_get_value(&menu->text_list, menu->text_list_idx);
+  char* suffix = "Enter 2>/dev/null";
 
   if(command == NULL)
     return;
 
-  result_command = malloc(strlen(prefix) + strlen(command) + strlen(
-                            suffix) + 1);
+  //2 - space and double quote
+  int result_command_size = strlen(prefix) + strlen(target_pane) + 2
+    + strlen(command) + 2 + strlen(suffix) + 1;
+  result_command = malloc(result_command_size);
   result_command BAHT_IS_NULL_ERRNO;
   result_command[0] = '\0';
 
-  strcat(result_command, prefix);
-  strcat(result_command, command);
-  strcat(result_command, suffix);
+  snprintf(result_command, result_command_size,
+      "%s%s \"%s\" %s", prefix, target_pane, command, suffix);
 
   system(result_command) BAHT_IS_NEG_1_ERRNO;
 
