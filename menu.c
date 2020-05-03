@@ -64,12 +64,12 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
 
 void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
 {
-  int ddd = num_items_on_screen_prev - menu->num_items_on_screen;
+  int num_items_on_screen_diff = num_items_on_screen_prev - menu->num_items_on_screen;
 
   if(menu->screen_idx >= menu->max_items_on_screen)
   {
-    menu->screen_idx -= ddd;
-    menu->top_of_text_list += ddd;
+    menu->screen_idx -= num_items_on_screen_diff;
+    menu->top_of_text_list += num_items_on_screen_diff;
   }
 }
 
@@ -317,31 +317,18 @@ void menu_go_down(Menu_t* menu)
 {
   if(menu->text_list_idx + 1 < menu->text_list.count)
   {
-    wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_NORMAL) BAHT_IS_ERR;
     menu->screen_idx++;
     menu->text_list_idx++;
 
     if(menu->screen_idx >= menu->max_items_on_screen)
     {
       menu->top_of_text_list++;
-
-      for(int i = 0, j = menu->top_of_text_list;
-          i < menu->num_items_on_screen;
-          i++, j++)
-      {
-        wclear(menu->items[i]) BAHT_IS_ERR;
-        wprintw(menu->items[i], "[%d] %s", j+1,
-            list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
-      }
-
       menu->screen_idx--;
     }
 
+    menu_repaint_items(menu);
     assert_conditions(menu);
 
-    wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_REVERSE) BAHT_IS_ERR;
     touchwin(menu->menu_wnd) BAHT_IS_ERR;
     wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   }
@@ -351,31 +338,18 @@ void menu_go_up(Menu_t* menu)
 {
   if(menu->text_list_idx - 1 >= 0)
   {
-    wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_NORMAL) BAHT_IS_ERR;
     menu->screen_idx--;
     menu->text_list_idx--;
 
     if(menu->screen_idx < 0)
     {
       menu->top_of_text_list--;
-
-      for(int i = 0, j = menu->top_of_text_list;
-          i < menu->num_items_on_screen;
-          i++, j++)
-      {
-        wclear(menu->items[i]) BAHT_IS_ERR;
-        wprintw(menu->items[i], "[%d] %s", j+1,
-            list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
-      }
-
       menu->screen_idx++;
     }
 
+    menu_repaint_items(menu);
     assert_conditions(menu);
 
-    wbkgd(menu->items[menu->screen_idx],
-          COLOR_PAIR(1) | A_REVERSE) BAHT_IS_ERR;
     touchwin(menu->menu_wnd) BAHT_IS_ERR;
     wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   }
