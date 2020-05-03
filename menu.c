@@ -493,153 +493,49 @@ void menu_move_to_item(Menu_t* menu)
 void menu_del_item(Menu_t* menu)
 {
   list_del(&menu->text_list, menu->text_list_idx);
-  int new_idx = menu->text_list_idx - 1;
+  menu->text_list_idx--;
 
-  if(new_idx < 0)//our item was the first one, can't go up
+  if(menu->top_of_text_list == 0)
   {
-    /*new_idx = text_list_idx + 1
-      if(new-idx >= text_list.count)// menu is empty!*/
-  }
-  else
-  {
-    menu->text_list_idx--;
-    if(menu->top_of_text_list == 0)
-    {
-      int num_below_screen = menu->text_list.count - menu->num_items_on_screen;
-      if(num_below_screen > 0)
-      {
-        /*for(int i = 0; i < menu->num_items_on_screen; i++)
-        {
-          delwin(menu->items[i]) BAHT_IS_ERR;
-        }
-        menu->items = realloc(menu->items,
-            menu->num_items_on_screen * sizeof(WINDOW*));*/
+    int num_below_screen = (menu->text_list.count + 1) - menu->num_items_on_screen;
 
-        menu->screen_idx--;
-        wclear(menu->menu_wnd) BAHT_IS_ERR;
-        wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
-        box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
-        menu_repaint_items(menu);
-      }
-      else
-      {
-        for(int i = 0; i < menu->num_items_on_screen; i++)
-        {
-          delwin(menu->items[i]) BAHT_IS_ERR;
-        }
-        menu->num_items_on_screen -= 1;
-        menu->items = realloc(menu->items,
-            menu->num_items_on_screen * sizeof(WINDOW*));
-
-        menu->screen_idx--;
-        wclear(menu->menu_wnd) BAHT_IS_ERR;
-        wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
-        box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
-        menu_allocate_items(menu);
-        menu_repaint_items(menu);
-      }
-    }
-    else
+    if(num_below_screen == 0)
     {
-      menu->top_of_text_list--;
-      /*for(int i = 0; i < menu->num_items_on_screen; i++)
-      {
-        wclear(menu->items[i]) BAHT_IS_ERR;
+      for(int i = 0; i < menu->num_items_on_screen; i++)
         delwin(menu->items[i]) BAHT_IS_ERR;
-      }
-      menu->items = realloc(menu->items,
-          menu->num_items_on_screen * sizeof(WINDOW*));*/
-      menu_repaint_items(menu);
-    }
-    /*menu->screen_idx--;
-
-      if(menu->screen_idx < 0)
-      {
-      menu->top_of_text_list--;
-      menu->screen_idx++;
-      }*/
-    //recalc num_items_on_screen , max_items_on_screen
-    /*for(int i = 0; i < menu->num_items_on_screen; i++)
-      delwin(menu->items[i]) BAHT_IS_ERR;
 
       menu->num_items_on_screen -= 1;
       menu->items = realloc(menu->items,
-      menu->num_items_on_screen * sizeof(WINDOW*));
-      menu_repaint_items(menu);*/
-    //menu_resize(menu);
-    /*
-     * by default go up
-     * but if pane is shrank(text_list.count > max_items_on_screen)
-     * deleting any element would cause an error due to the fact
-     *
-     *
-     * */
-  }
+          menu->num_items_on_screen * sizeof(WINDOW*));
 
-  assert_conditions(menu);//will bite!
-  /*ll_del(ll_list, text_list_idx)
-   * recalc text_list_idx, screen_idx, top_of_text_list
-   * edge cases: deleted item was last one or first one
-   * edge case: deleting only element from menu(menu becomes empty)
-   *
-   * int new-idx = text_list_idx -1
-   * if(new-idx < 0) our item was the first one
-   * try new-idx = text_list_idx + 1
-   * if(new-idx >= text_list.count) menu is empty!
-   * three scenarios: go up, go down, menu is empty
-   * go up::
-    menu->screen_idx--;
-    menu->text_list_idx--;
-
-    if(menu->screen_idx < 0)
-    {
-      menu->top_of_text_list--;
-      menu->screen_idx++;
+      menu_allocate_items(menu);
     }
 
-  for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) BAHT_IS_ERR;
-
-  menu->items = realloc(menu->items,
-                        menu->num_items_on_screen * sizeof(WINDOW*));
-  menu_repaint_items(menu);
-
-    go down::
-    menu->screen_idx++;
-    menu->text_list_idx++;
-
-    if(menu->screen_idx >= menu->max_items_on_screen)
-    {
-      menu->top_of_text_list++;
+    if(menu->text_list_idx < 0)
+      menu->text_list_idx++;
+    else
       menu->screen_idx--;
+
+    if(menu->text_list.count != 0)
+      assert_conditions(menu);
+    else
+    {
+      menu->screen_idx = -1;
+      menu->text_list_idx = -1;
+      menu->top_of_text_list = -1;
     }
 
-  for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) BAHT_IS_ERR;
-
-  menu->items = realloc(menu->items,
-                        menu->num_items_on_screen * sizeof(WINDOW*));
-  menu_repaint_items(menu);
-
-  menu is empty::
-  if(menu->text_list.count == 0)
-  {
-    menu->screen_idx = -1;
-    menu->text_list_idx = -1;
-    menu->top_of_text_list = -1;
-  }
-  for(int i = 0; i < num_items_on_screen_prev; i++)
-    delwin(menu->items[i]) BAHT_IS_ERR;
-
-  menu->items = realloc(menu->items,
-                        menu->num_items_on_screen * sizeof(WINDOW*));
     wclear(menu->menu_wnd) BAHT_IS_ERR;
     wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
     box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
-
+  }
+  else
+  {
+    menu->top_of_text_list--;
     assert_conditions(menu);
-   *
-   */
+  }
+
+  menu_repaint_items(menu);
 }
 
 void menu_add_item(Menu_t* menu)
@@ -666,10 +562,12 @@ void menu_add_item(Menu_t* menu)
   list_add(&menu->text_list, user_input);
   free(user_input);
 
-  //???
-  menu->screen_idx = 0;
-  menu->text_list_idx = 0;
-  menu->top_of_text_list = 0;
+  if(menu->text_list.count == 1)
+  {
+    menu->screen_idx = 0;
+    menu->text_list_idx = 0;
+    menu->top_of_text_list = 0;
+  }
 
   menu_resize(menu);
 
