@@ -94,7 +94,8 @@ void menu_repaint_items(Menu_t* menu)
       i < menu->num_items_on_screen; i++, j++)
   {
     wbkgd(menu->items[i],
-          COLOR_PAIR(1) | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
+          (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))
+          | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     BAHT_IS_ERR;
     wclear(menu->items[i]) BAHT_IS_ERR;
     wprintw(menu->items[i], "[%d] %s", j+1,
@@ -129,7 +130,8 @@ void menu_resize(Menu_t* menu)
   else
   {
     wclear(menu->menu_wnd) BAHT_IS_ERR;
-    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
+    wbkgd(menu->menu_wnd,
+        (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))) BAHT_IS_ERR;
     box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
   }
 
@@ -280,7 +282,8 @@ void menu_init(Menu_t* menu)
                           menu_ncurses_x);
   menu->menu_wnd BAHT_IS_NULL_ERRNO;
 
-  wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
+  wbkgd(menu->menu_wnd,
+        (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))) BAHT_IS_ERR;
 
   menu->items = NULL;
 
@@ -379,15 +382,12 @@ void menu_recolor(Menu_t* menu)
   int result = fgetc(pipe);
 
   if(result == '0' && menu->is_active)
-  {
     menu->is_active = 0;
-    wbkgd(menu->menu_wnd, COLOR_PAIR(2)) BAHT_IS_ERR;
-  }
   else if(result == '1' && !menu->is_active)
-  {
     menu->is_active = 1;
-    wbkgd(menu->menu_wnd, COLOR_PAIR(1)) BAHT_IS_ERR;
-  }
+
+  wbkgd(menu->menu_wnd,
+        (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))) BAHT_IS_ERR;
 
   wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   pclose(pipe) BAHT_IS_NEG_1_ERRNO;
