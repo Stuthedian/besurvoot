@@ -572,6 +572,7 @@ void menu_add_item(Menu_t* menu)
   wgetnstr(menu->input_wnd, user_input, menu_item_width) BAHT_IS_ERR;
   curs_set(FALSE) BAHT_IS_ERR;
   noecho() BAHT_IS_ERR;
+  halfdelay(5) BAHT_IS_ERR;//restore delay because it changed by wgetnstr
 
   delwin(menu->input_wnd) BAHT_IS_ERR;
   list_add(&menu->text_list, user_input);
