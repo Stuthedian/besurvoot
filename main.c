@@ -5,8 +5,8 @@
 int main()
 {
   baht_init();
-  baht_catch_sigsegv();
-  baht_catch_sigabort();
+  baht_catch_signal(SIGABRT);
+  baht_catch_signal(SIGSEGV);
 
   ncurses_init();
   menu_do_routine();
