@@ -1,7 +1,8 @@
 #define BAHT_NCURSES
 #define BAHT_IMPLEMENTATION
-#define _POSIX_C_SOURCE 2
 #include "baht.h"
+#define DG_MISC_IMPLEMENTATION
+#include "DG_misc.h"
 
 #include <ctype.h>
 #include <sys/ioctl.h>
@@ -219,6 +220,8 @@ char* remove_newline(char* string)
 void fill_list_from_file(Linked_List_t* list)
 {
   char temp_str[STRING_WIDTH];
+  chdir(DG_GetExecutableDir()) BAHT_IS_NEG_1_ERRNO;
+  chdir("..") BAHT_IS_NEG_1_ERRNO;
   FILE* file = fopen(BESURVOOT_FILENAME, "a+");
   file BAHT_IS_NULL_ERRNO;
 
