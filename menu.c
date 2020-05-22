@@ -196,7 +196,6 @@ void ncurses_init()
 
   nonl() BAHT_IS_ERR;
   intrflush(stdscr, FALSE) BAHT_IS_ERR;
-  keypad(stdscr, TRUE) BAHT_IS_ERR;
 
   halfdelay(DELAY) BAHT_IS_ERR;
 
@@ -390,6 +389,8 @@ void menu_recolor(Menu_t* menu)
 void menu_wait_for_user_input(Menu_t* menu)
 {
   bool was_move_to_item2_pressed = FALSE;
+
+  keypad(menu->menu_wnd, TRUE) BAHT_IS_ERR;
 
   while(1)
   {
