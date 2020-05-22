@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "menu.h"
 
-
+#define DELAY 5
 #define assert_conditions(menu) do\
 {\
   assert(menu->max_items_on_screen >= 0);\
@@ -91,6 +91,8 @@ void menu_allocate_items(Menu_t* menu)
 
 void menu_repaint_items(Menu_t* menu)
 {
+  touchwin(menu->menu_wnd) BAHT_IS_ERR;
+
   for(int i = 0, j = menu->top_of_text_list;
       i < menu->num_items_on_screen; i++, j++)
   {
@@ -98,13 +100,12 @@ void menu_repaint_items(Menu_t* menu)
           (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))
           | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     BAHT_IS_ERR;
-    wclear(menu->items[i]) BAHT_IS_ERR;
+    werase(menu->items[i]) BAHT_IS_ERR;
     wprintw(menu->items[i], "[%d] %s", j+1,
             list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
+    wrefresh(menu->items[i]) BAHT_IS_ERR;
   }
 
-
-  touchwin(menu->menu_wnd) BAHT_IS_ERR;
   wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
@@ -197,7 +198,7 @@ void ncurses_init()
   intrflush(stdscr, FALSE) BAHT_IS_ERR;
   keypad(stdscr, TRUE) BAHT_IS_ERR;
 
-  halfdelay(5) BAHT_IS_ERR;
+  halfdelay(DELAY) BAHT_IS_ERR;
 
   refresh() BAHT_IS_ERR;
 }
@@ -295,7 +296,6 @@ void menu_init(Menu_t* menu)
     for(int i = 0; i < menu->height; i++)
       mvwhline(menu->menu_wnd, i, 0, 'x', COLS) BAHT_IS_ERR;
 
-    wrefresh(menu->menu_wnd) BAHT_IS_ERR;
     menu->height = 0;
     return;
   }
@@ -306,10 +306,6 @@ void menu_init(Menu_t* menu)
   box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
   menu_allocate_items(menu);
   menu_repaint_items(menu);
-
-
-  touchwin(menu->menu_wnd) BAHT_IS_ERR;
-  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_destroy(Menu_t* menu)
@@ -345,8 +341,6 @@ void menu_go_down(Menu_t* menu, int repeat_count)
   }
 
   menu_repaint_items(menu);
-  touchwin(menu->menu_wnd) BAHT_IS_ERR;
-  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_go_up(Menu_t* menu, int repeat_count)
@@ -372,8 +366,6 @@ void menu_go_up(Menu_t* menu, int repeat_count)
   }
 
   menu_repaint_items(menu);
-  touchwin(menu->menu_wnd) BAHT_IS_ERR;
-  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
 }
 
 void menu_recolor(Menu_t* menu)
@@ -392,7 +384,6 @@ void menu_recolor(Menu_t* menu)
   wbkgd(menu->menu_wnd,
         (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))) BAHT_IS_ERR;
 
-  wrefresh(menu->menu_wnd) BAHT_IS_ERR;
   pclose(pipe) BAHT_IS_NEG_1_ERRNO;
 }
 
@@ -575,7 +566,7 @@ void menu_add_item(Menu_t* menu)
   wgetnstr(menu->input_wnd, user_input, menu_item_width) BAHT_IS_ERR;
   curs_set(FALSE) BAHT_IS_ERR;
   noecho() BAHT_IS_ERR;
-  halfdelay(5) BAHT_IS_ERR;//restore delay because it changed by wgetnstr
+  halfdelay(DELAY) BAHT_IS_ERR;//restore delay because it changed by wgetnstr
 
   delwin(menu->input_wnd) BAHT_IS_ERR;
   list_add(&menu->text_list, user_input);
