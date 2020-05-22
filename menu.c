@@ -254,6 +254,7 @@ void menu_init(Menu_t* menu)
 {
   const int menu_ncurses_y = 0;
   const int menu_ncurses_x = 0;
+  memset(menu, 0, sizeof(Menu_t));
   menu->is_active = 1;
   menu->width = COLS;
   menu->height = LINES;
