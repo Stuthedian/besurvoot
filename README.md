@@ -19,6 +19,11 @@ To delete an item press '*D*'.
 If you unsatisfied with the order of items you can rearrange them manually. To do that 
 locate the file *.besurvoot_commands* and open it with you favourite text editor.
 
+## Sending a command
+To send the command navigate to it and press '*Enter*'. The command will be sent to a previous active pane.
+
+If you want to target specific pane type pane number before pressing '*Enter*'. To get to know pane numbers type *\<tmux-prefix\>q*
+
 
 ## Quit
 Just press '*q*'
