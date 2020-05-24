@@ -1,3 +1,7 @@
+## besurvoot
+besurvoot (/bɜsär'vut/ - 'illiterate' in [talysh](https://en.wikipedia.org/wiki/Talysh_language) language) - interactive 'tmux send-keys' with vi-like keybindings. Basically a list of commands to send to other panes.
+
+
 ## Navigation
 ### Basic
 Standard vi-like navigation: '*jk*'. Arrow keys also supported.
