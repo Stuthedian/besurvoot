@@ -1,6 +1,9 @@
 ## besurvoot
 besurvoot (/bɜsär'vut/ - 'illiterate' in [talysh](https://en.wikipedia.org/wiki/Talysh_language) language) - interactive 'tmux send-keys' with vi-like keybindings. Basically a list of commands to send to other panes.
 
+## In action
+![Sample text](https://raw.githubusercontent.com/Stuthedian/besurvoot/master/besurvoot.gif)
+
 
 ## Navigation
 ### Basic
@@ -35,3 +38,9 @@ Brackets indicate version that is installed on my system:
 tmux(2.9a)
 
 ncurses(6.1)
+
+## Acknowledgements
+
+[Terminalizer](https://github.com/faressoft/terminalizer)
+
+[DG_misc.h](https://github.com/DanielGibson/Snippets)
