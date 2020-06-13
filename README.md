@@ -2,6 +2,7 @@
 besurvoot (/bɜsär'vut/ - 'illiterate' in [talysh](https://en.wikipedia.org/wiki/Talysh_language) language) - interactive 'tmux send-keys' with vi-like keybindings. Basically a list of commands to send to other panes.
 
 ## In action
+*Colors slightly messed up by recording*
 ![Sample text](https://raw.githubusercontent.com/Stuthedian/besurvoot/master/besurvoot.gif)
 
 
