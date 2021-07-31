@@ -28,6 +28,8 @@ To send the command navigate to it and press '*Enter*'. The command will be sent
 
 If you want to target specific pane type pane number before pressing '*Enter*'. To get to know pane numbers type *\<tmux-prefix\>q*
 
+## Do regime
+In this regime a word 'do' will be prepended to the executed command. Press '*Z*' to prepend a word for the command
 
 ## Quit
 Just press '*q*'
