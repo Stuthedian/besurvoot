@@ -66,7 +66,8 @@ void menu_enlarge(Menu_t* menu, const int num_items_on_screen_prev)
 
 void menu_shrink(Menu_t* menu, const int num_items_on_screen_prev)
 {
-  int num_items_on_screen_diff = num_items_on_screen_prev - menu->num_items_on_screen;
+  int num_items_on_screen_diff = num_items_on_screen_prev -
+                                 menu->num_items_on_screen;
 
   if(menu->screen_idx >= menu->max_items_on_screen)
   {
@@ -101,7 +102,7 @@ void menu_repaint_items(Menu_t* menu)
           | (i == menu->screen_idx ? A_REVERSE : A_NORMAL))
     BAHT_IS_ERR;
     werase(menu->items[i]) BAHT_IS_ERR;
-    wprintw(menu->items[i], "[%d] %s", j+1,
+    wprintw(menu->items[i], "[%d] %s", j + 1,
             list_get_value(&menu->text_list, j));// BAHT_IS_ERR;
     wrefresh(menu->items[i]) BAHT_IS_ERR;
   }
@@ -133,7 +134,7 @@ void menu_resize(Menu_t* menu)
   {
     wclear(menu->menu_wnd) BAHT_IS_ERR;
     wbkgd(menu->menu_wnd,
-        (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))) BAHT_IS_ERR;
+          (menu->is_active ? COLOR_PAIR(1) : COLOR_PAIR(2))) BAHT_IS_ERR;
     box(menu->menu_wnd, '|', '-') BAHT_IS_ERR;
   }
 
@@ -256,6 +257,7 @@ void menu_init(Menu_t* menu)
   const int menu_ncurses_x = 0;
   memset(menu, 0, sizeof(Menu_t));
   menu->is_active = 1;
+  menu->in_do_regime = 0;
   menu->width = COLS;
   menu->height = LINES;
   menu->max_items_on_screen = menu->height - MENU_BOX_OFFSET;
@@ -370,7 +372,8 @@ void menu_go_up(Menu_t* menu, int repeat_count)
 
 void menu_recolor(Menu_t* menu)
 {
-  char* command = "tmux display-message -p -t $TMUX_PANE -F '#{pane_active}'";
+  char* command =
+    "tmux display-message -p -t $TMUX_PANE -F '#{pane_active}'";
   FILE* pipe = popen(command, "r");
   pipe BAHT_IS_NULL_ERRNO;
 
@@ -441,11 +444,16 @@ void menu_wait_for_user_input(Menu_t* menu)
         was_move_to_item2_pressed = FALSE;
         menu_move_to_item(menu);
       }
+
       break;
 
     case UA_DEL_ITEM:
-        menu_del_item(menu);
-        break;
+      menu_del_item(menu);
+      break;
+
+    case UA_DO_REGIME:
+      menu->in_do_regime = 1;
+      break;
 
     case UA_QUIT:
       return;
@@ -455,11 +463,15 @@ void menu_wait_for_user_input(Menu_t* menu)
       break;
     }
 
-
     if(ch != ERR && was_move_to_item2_pressed != TRUE)
     {
       update_row_num(menu->row_num_str, ch);
       was_move_to_item2_pressed = FALSE;
+    }
+
+    if(!(ch == UA_DO_REGIME || ch == UA_ENTER))
+    {
+      menu->in_do_regime = 0;
     }
   }
 }
@@ -508,7 +520,8 @@ void menu_del_item(Menu_t* menu)
 
   if(menu->top_of_text_list == 0)
   {
-    int num_below_screen = (menu->text_list.count + 1) - menu->num_items_on_screen;
+    int num_below_screen = (menu->text_list.count + 1) -
+                           menu->num_items_on_screen;
 
     if(num_below_screen == 0)
     {
@@ -517,7 +530,7 @@ void menu_del_item(Menu_t* menu)
 
       menu->num_items_on_screen -= 1;
       menu->items = realloc(menu->items,
-          menu->num_items_on_screen * sizeof(WINDOW*));
+                            menu->num_items_on_screen * sizeof(WINDOW*));
 
       menu_allocate_items(menu);
     }
@@ -568,7 +581,8 @@ void menu_add_item(Menu_t* menu)
   wgetnstr(menu->input_wnd, user_input, menu_item_width) BAHT_IS_ERR;
   curs_set(FALSE) BAHT_IS_ERR;
   noecho() BAHT_IS_ERR;
-  halfdelay(DELAY) BAHT_IS_ERR;//restore delay because it changed by wgetnstr
+  halfdelay(DELAY)
+  BAHT_IS_ERR;//restore delay because it changed by wgetnstr
 
   delwin(menu->input_wnd) BAHT_IS_ERR;
   list_add(&menu->text_list, user_input);
@@ -590,7 +604,9 @@ void menu_act_on_item(Menu_t* menu)
 {
   char* result_command = NULL;
   char* prefix = "tmux send-keys -t ";
-  char* target_pane = menu->row_num_str[0] == '\0' ? "!" : menu->row_num_str;
+  char* target_pane = menu->row_num_str[0] == '\0' ? "!" :
+                      menu->row_num_str;
+  char* do_prefix = "do ";
   char* command = list_get_value(&menu->text_list, menu->text_list_idx);
   char* suffix = "Enter 2>/dev/null";
 
@@ -599,13 +615,25 @@ void menu_act_on_item(Menu_t* menu)
 
   //2 - space and double quote
   int result_command_size = strlen(prefix) + strlen(target_pane) + 2
-    + strlen(command) + 2 + strlen(suffix) + 1;
+                            + strlen(command) + 2 + strlen(suffix) + 1;
+
+  if(menu->in_do_regime)
+    result_command_size += strlen(do_prefix);
+
   result_command = malloc(result_command_size);
   result_command BAHT_IS_NULL_ERRNO;
   result_command[0] = '\0';
 
-  snprintf(result_command, result_command_size,
-      "%s%s \"%s\" %s", prefix, target_pane, command, suffix);
+  if(!menu->in_do_regime)
+  {
+    snprintf(result_command, result_command_size,
+             "%s%s \"%s\" %s", prefix, target_pane, command, suffix);
+  }
+  else
+  {
+    snprintf(result_command, result_command_size,
+             "%s%s \"%s%s\" %s", prefix, target_pane, do_prefix, command, suffix);
+  }
 
   system(result_command) BAHT_IS_NEG_1_ERRNO;
 

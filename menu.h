@@ -19,11 +19,13 @@ typedef enum User_action
   UA_DEL_ITEM = 'D',
   UA_MOVE_TO_ITEM = 'G',
   UA_MOVE_TO_ITEM2 = 'g',
+  UA_DO_REGIME = 'Z',
 } User_action_e;
 
 typedef struct Menu
 {
   int is_active;
+  int in_do_regime;
 
   char row_num_str[NUM_OF_DIGITS];
   int row_num;
