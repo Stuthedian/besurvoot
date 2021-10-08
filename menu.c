@@ -463,7 +463,8 @@ void menu_wait_for_user_input(Menu_t* menu)
       break;
     }
 
-    if(ch != ERR && was_move_to_item2_pressed != TRUE)
+    if(ch != ERR && was_move_to_item2_pressed != TRUE
+        && !menu->in_do_regime)
     {
       update_row_num(menu->row_num_str, ch);
       was_move_to_item2_pressed = FALSE;
@@ -638,6 +639,8 @@ void menu_act_on_item(Menu_t* menu)
   system(result_command) BAHT_IS_NEG_1_ERRNO;
 
   free(result_command);
+
+  menu->in_do_regime = 0;
 }
 
 void menu_do_routine()
