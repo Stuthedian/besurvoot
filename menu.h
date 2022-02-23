@@ -20,6 +20,8 @@ typedef enum User_action
   UA_MOVE_TO_ITEM = 'G',
   UA_MOVE_TO_ITEM2 = 'g',
   UA_DO_REGIME = 'Z',
+  UA_SEARCH_FORWARD = '/',
+  UA_SEARCH_BACKWARD = '?',
 } User_action_e;
 
 typedef struct Menu
@@ -68,6 +70,7 @@ void menu_del_item(Menu_t* menu);
 void menu_act_on_item(Menu_t* menu);
 bool menu_should_resize(const int menu_height, const int menu_width);
 void menu_resize(Menu_t* menu);
+void menu_search_for_item(Menu_t* menu, bool search_forward);
 
 void menu_do_routine();
 

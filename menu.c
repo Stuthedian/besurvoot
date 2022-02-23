@@ -455,6 +455,14 @@ void menu_wait_for_user_input(Menu_t* menu)
       menu->in_do_regime = 1;
       break;
 
+    case UA_SEARCH_FORWARD:
+      menu_search_for_item(menu, true);
+      break;
+
+    case UA_SEARCH_BACKWARD:
+      menu_search_for_item(menu, false);
+      break;
+
     case UA_QUIT:
       return;
 
@@ -599,6 +607,137 @@ void menu_add_item(Menu_t* menu)
   menu_resize(menu);
 
   menu_go_down(menu, menu->text_list.count - 1 - menu->text_list_idx);
+}
+
+void menu_search_for_item(Menu_t* menu, bool search_forward)
+{
+  char* user_input = NULL;
+  const int menu_item_width = COLS - MENU_BOX_OFFSET;
+  user_input = malloc(menu_item_width * sizeof(char) + 1);
+  user_input BAHT_IS_NULL_ERRNO;
+
+  menu->input_wnd = derwin(menu->menu_wnd, 1, menu_item_width,
+                           menu->height - 1,
+                           0 + MENU_BOX_OFFSET / 2);
+  menu->input_wnd BAHT_IS_NULL;
+  wbkgd(menu->input_wnd, COLOR_PAIR(3)) BAHT_IS_ERR;
+  werase(menu->input_wnd);
+  wprintw(menu->input_wnd, search_forward ? "/" : "?") BAHT_IS_ERR;
+
+  echo() BAHT_IS_ERR;
+  curs_set(TRUE) BAHT_IS_ERR;
+  wgetnstr(menu->input_wnd, user_input, menu_item_width) BAHT_IS_ERR;
+  curs_set(FALSE) BAHT_IS_ERR;
+  noecho() BAHT_IS_ERR;
+  halfdelay(DELAY)
+  BAHT_IS_ERR;//restore delay because it changed by wgetnstr
+
+  delwin(menu->input_wnd) BAHT_IS_ERR;
+
+  //save current element index
+  bool is_found = false;
+  int current_index = menu->text_list_idx;
+  int idx = current_index;
+  struct Linked_List_Node* item = list_find(&menu->text_list,
+                                  current_index);//maybe we should always start
+  //with the next element after current
+
+  if (search_forward)
+  {
+    //starting from current element and going down in a list
+    do
+    {
+      //check for occurence of a pattern in every element
+      //  by using 'strstr' function
+      if(strstr(item->text, user_input) != NULL)
+      {
+        is_found = true;
+        break;
+      }
+
+      item = item->next;
+      idx++;
+    }
+    while(item != NULL);
+
+    if(!is_found)//and maybe wrapping should be optional
+    {
+      item = menu->text_list.first;
+      idx = 0;
+
+      //if nothing found go to first element and go down
+      //stop if we hit saved element's index
+      do
+      {
+        //check for occurence of a pattern in every element
+        //  by using 'strstr' function
+        if(strstr(item->text, user_input) != NULL)
+        {
+          is_found = true;
+          break;
+        }
+
+        item = item->next;
+        idx++;
+      }
+      while(item != NULL && idx < current_index);
+
+    }
+  }
+  else
+  {
+    //starting from current element and going up in a list
+    do
+    {
+      //check for occurence of a pattern in every element
+      //  by using 'strstr' function
+      if(strstr(item->text, user_input) != NULL)
+      {
+        is_found = true;
+        break;
+      }
+
+      item = item->prev;
+      idx--;
+    }
+    while(item != NULL);
+
+    if(!is_found)//and maybe wrapping should be optional
+    {
+      //if nothing is found go to last element and go up
+      //stop if we hit saved element's index
+      item = menu->text_list.last;
+      idx = menu->text_list.count - 1;
+
+      do
+      {
+        //check for occurence of a pattern in every element
+        //  by using 'strstr' function
+        if(strstr(item->text, user_input) != NULL)
+        {
+          is_found = true;
+          break;
+        }
+
+        item = item->prev;
+        idx--;
+      }
+      while(item != NULL && idx > current_index);
+    }
+  }
+
+
+  free(user_input);
+
+  menu_resize(menu);
+
+  if(is_found)
+  {
+    if(idx > menu->text_list_idx)
+      menu_go_down(menu, idx - menu->text_list_idx);
+    else//we wrapped our search
+      menu_go_up(menu, menu->text_list_idx - idx);
+  }
 }
 
 void menu_act_on_item(Menu_t* menu)
